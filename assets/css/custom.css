@@ -452,6 +452,13 @@ body {
     line-height: 1.2;
 }
 
+.cita-chip-emoji {
+    display: inline-block;
+    margin: 0 2px;
+    font-size: 0.75rem;
+    vertical-align: baseline;
+}
+
 /* Pestañas de Navegación */
 .nav-tabs-cmco .nav-link {
     font-weight: 600;

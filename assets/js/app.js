@@ -69,6 +69,17 @@ function obtenerComponentesHora12(horaStr) {
     };
 }
 
+/**
+ * Acorta un nombre completo para mostrar como máximo un número determinado de palabras (por defecto 2)
+ * ej: "María Auxiliadora Aguilera" -> "María Auxiliadora"
+ */
+function acortarNombre(nombreCompleto, maxPalabras = 2) {
+    if (!nombreCompleto) return '';
+    const palabras = nombreCompleto.trim().split(/\s+/);
+    if (palabras.length <= maxPalabras) return nombreCompleto.trim();
+    return palabras.slice(0, maxPalabras).join(' ');
+}
+
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -595,10 +606,12 @@ function renderizarVistaMes() {
         const maxChips = 3;
         const mostrar = citasDelDia.slice(0, maxChips);
         mostrar.forEach(cita => {
-            const estadoInfo = AppState.estados[cita.estado] || { color: '#4f90a5' };
+            const estadoInfo = AppState.estados[cita.estado] || { emoji: '📌', label: cita.estado, color: '#4f90a5' };
+            const nombreCorto = acortarNombre(cita.paciente_nombre, 2);
+            const emojiHtml = estadoInfo.emoji ? `<span class="cita-chip-emoji">${estadoInfo.emoji}</span>` : '';
             html += `
-                <div class="cal-cita-chip" style="border-left-color: ${estadoInfo.color};" title="${formatearHora12(cita.hora)} - ${cita.paciente_nombre} (${cita.medico_nombre})">
-                    <strong>${formatearHora12(cita.hora)}</strong> ${cita.paciente_nombre}
+                <div class="cal-cita-chip" style="border-left-color: ${estadoInfo.color};" title="${formatearHora12(cita.hora)} ${estadoInfo.emoji || ''} ${cita.paciente_nombre} · ${cita.medico_nombre} (${estadoInfo.label || cita.estado})">
+                    <strong>${formatearHora12(cita.hora)}</strong> ${emojiHtml} ${nombreCorto}
                 </div>
             `;
         });
