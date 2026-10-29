@@ -6,15 +6,10 @@
         <div class="agenda-bar mb-3 no-print">
             <div class="row g-3 align-items-center">
                 <div class="col-lg-5 col-md-12">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                        <button class="btn btn-sm btn-outline-secondary py-1 px-2" onclick="showSection('liquidacion')" title="Regresar a Liquidación">
-                            <i class="bi bi-arrow-left"></i>
-                        </button>
-                        <h4 class="fw-bold mb-0 text-primary d-flex align-items-center gap-2">
-                            <i class="bi bi-person-badge"></i> Catálogo de Médicos y Especialistas
-                        </h4>
-                    </div>
-                    <p class="small text-muted mb-0 ps-4">
+                    <h4 class="fw-bold mb-1 text-primary d-flex align-items-center gap-2">
+                        <i class="bi bi-person-badge"></i> Catálogo de Médicos y Especialistas
+                    </h4>
+                    <p class="small text-muted mb-0">
                         Administración de profesionales de la salud, especialidades y porcentaje de honorarios.
                     </p>
                 </div>
@@ -36,49 +31,6 @@
                     <button class="btn btn-primary fw-bold shadow-sm" onclick="abrirModalNuevoMedico()">
                         <i class="bi bi-person-plus-fill me-1"></i> + Registrar Doctor
                     </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tarjetas de Métricas Rápidas -->
-        <div class="row g-3 mb-3">
-            <div class="col-sm-4">
-                <div class="card shadow-sm border-0 border-start border-primary border-4 p-3 bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-muted small fw-semibold">Total Doctores</div>
-                            <h4 class="fw-bold mb-0 text-dark" id="medicos_metric_total">0</h4>
-                        </div>
-                        <div class="bg-primary bg-opacity-10 text-primary p-2 rounded-3 fs-4">
-                            <i class="bi bi-people-fill"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <div class="card shadow-sm border-0 border-start border-success border-4 p-3 bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-muted small fw-semibold">Doctores Activos</div>
-                            <h4 class="fw-bold mb-0 text-success" id="medicos_metric_activos">0</h4>
-                        </div>
-                        <div class="bg-success bg-opacity-10 text-success p-2 rounded-3 fs-4">
-                            <i class="bi bi-check-circle-fill"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-4">
-                <div class="card shadow-sm border-0 border-start border-secondary border-4 p-3 bg-white">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <div class="text-muted small fw-semibold">Doctores Inactivos</div>
-                            <h4 class="fw-bold mb-0 text-secondary" id="medicos_metric_inactivos">0</h4>
-                        </div>
-                        <div class="bg-secondary bg-opacity-10 text-secondary p-2 rounded-3 fs-4">
-                            <i class="bi bi-person-x-fill"></i>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

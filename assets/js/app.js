@@ -1719,14 +1719,6 @@ async function cargarCatalogoMedicos() {
             const data = json.data;
             AppState.catalogoMedicos = data.medicos;
 
-            // Actualizar Métricas
-            const metricTotal = document.getElementById('medicos_metric_total');
-            const metricActivos = document.getElementById('medicos_metric_activos');
-            const metricInactivos = document.getElementById('medicos_metric_inactivos');
-            if (metricTotal) metricTotal.innerText = data.total;
-            if (metricActivos) metricActivos.innerText = data.total_activos;
-            if (metricInactivos) metricInactivos.innerText = data.total_inactivos;
-
             if (data.medicos.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-muted">No se encontraron médicos con los filtros aplicados.</td></tr>';
                 return;
