@@ -1,4 +1,4 @@
-<!-- Modal Detalle y Cambio de Estado de Cita (Diseño Compacto y Simétrico) -->
+<!-- Modal Detalle y Cambio de Estado de Cita (Diseño Compacto y Equilibrado) -->
 <div class="modal fade" id="modalEstado" tabindex="-1" aria-labelledby="modalEstadoLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
         <div class="modal-content shadow border-0">
@@ -33,7 +33,7 @@
                             <i class="bi bi-clock me-1 text-primary"></i><strong>Hora:</strong> <span id="det_hora" class="text-dark">08:00 AM</span>
                         </div>
                         <div class="col-6 text-truncate">
-                            <i class="bi bi-door-closed me-1 text-primary"></i><strong>Ubicación:</strong> <span id="det_consultorio" class="text-dark">C1</span>
+                            <i class="bi bi-door-closed me-1 text-primary"></i><strong>Ubicación:</strong> <span id="det_consultorio" class="text-dark">Consultorio 1</span>
                         </div>
                         <div class="col-6 text-truncate">
                             <i class="bi bi-person-badge me-1 text-primary"></i><strong>Médico:</strong> <span id="det_medico" class="text-dark">Dr.</span>
@@ -55,49 +55,49 @@
                     </div>
                 </div>
 
-                <!-- Botones de Cambio Rápido de Estado con Simetría Perfecta -->
+                <!-- Botones de Cambio Rápido de Estado con Espaciado Cómodo y Tamaño Refinado -->
                 <div class="mb-2.5">
                     <div class="d-flex justify-content-between align-items-center mb-1.5">
                         <span class="fw-bold small text-muted text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">
                             Cambiar Estado:
                         </span>
                     </div>
-                    <div class="row g-1.5">
+                    <div class="row g-2">
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-primary btn-sm w-100 py-1.5 px-2 text-start text-truncate fw-semibold" onclick="ejecutarCambioEstado('Agendada')">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100 py-1 px-2 text-start text-truncate fw-semibold" style="font-size: 0.8rem;" onclick="ejecutarCambioEstado('Agendada')">
                                 📌 Agendada
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-warning btn-sm w-100 py-1.5 px-2 text-start text-truncate text-dark fw-semibold" onclick="ejecutarCambioEstado('Sin confirmar')">
+                            <button type="button" class="btn btn-outline-warning btn-sm w-100 py-1 px-2 text-start text-truncate text-dark fw-semibold" style="font-size: 0.8rem;" onclick="ejecutarCambioEstado('Sin confirmar')">
                                 📞 Sin confirmar
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-info btn-sm w-100 py-1.5 px-2 text-start text-truncate text-dark fw-semibold" onclick="ejecutarCambioEstado('Confirmado')">
+                            <button type="button" class="btn btn-outline-info btn-sm w-100 py-1 px-2 text-start text-truncate text-dark fw-semibold" style="font-size: 0.8rem;" onclick="ejecutarCambioEstado('Confirmado')">
                                 ✔️ Confirmado
                             </button>
                         </div>
                         <div class="col-6">
-                            <button type="button" class="btn btn-outline-success btn-sm w-100 py-1.5 px-2 text-start text-truncate fw-semibold" onclick="ejecutarCambioEstado('Atendido')">
+                            <button type="button" class="btn btn-outline-success btn-sm w-100 py-1 px-2 text-start text-truncate fw-semibold" style="font-size: 0.8rem;" onclick="ejecutarCambioEstado('Atendido')">
                                 ✅ Atendido
                             </button>
                         </div>
                         <div class="col-12">
-                            <button type="button" class="btn btn-outline-secondary btn-sm w-100 py-1 px-2 text-center text-truncate" onclick="ejecutarCambioEstado('No asistio')">
+                            <button type="button" class="btn btn-outline-secondary btn-sm w-100 py-1 px-2 text-center text-truncate" style="font-size: 0.8rem;" onclick="ejecutarCambioEstado('No asistio')">
                                 🚫 No asistió
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Acciones Principales en 1 Sola Fila Balanceada -->
+                <!-- Acciones Principales con Botón 'Registrar Pago' -->
                 <div class="d-flex gap-2 pt-2 border-top">
                     <button type="button" class="btn btn-outline-danger btn-sm px-3 text-nowrap" onclick="eliminarCitaActual()" title="Cancelar y eliminar esta cita">
                         <i class="bi bi-trash3 me-1"></i> Eliminar
                     </button>
-                    <button type="button" class="btn btn-success fw-bold btn-sm flex-grow-1 py-2 text-truncate" onclick="abrirCobroDesdeDetalle()">
-                        <i class="bi bi-cash-stack me-1"></i> Cobrar / Facturar (💲 / 📦)
+                    <button type="button" class="btn btn-success fw-bold btn-sm flex-grow-1 py-1.5 text-truncate" onclick="abrirCobroDesdeDetalle()">
+                        <i class="bi bi-cash-stack me-1"></i> Registrar Pago
                     </button>
                 </div>
             </div>
