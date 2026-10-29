@@ -25,7 +25,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link px-3" id="tab-liquidacion" href="javascript:void(0)" onclick="showSection('liquidacion')">
-                        <i class="bi bi-calculator me-1"></i> Médicos
+                        <i class="bi bi-calculator me-1"></i> Liquidación
                     </a>
                 </li>
                 <li class="nav-item">

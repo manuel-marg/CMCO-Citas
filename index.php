@@ -25,6 +25,7 @@ require_once __DIR__ . '/views/agenda/index.php';
 require_once __DIR__ . '/views/liquidacion/index.php';
 require_once __DIR__ . '/views/beneficios/index.php';
 require_once __DIR__ . '/views/pacientes/index.php';
+require_once __DIR__ . '/views/medicos/index.php';
 echo '</main>';
 
 require_once __DIR__ . '/views/layouts/footer.php';

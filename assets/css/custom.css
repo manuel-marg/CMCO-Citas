@@ -671,4 +671,37 @@ body {
     .print-header-liquidacion {
         margin-bottom: 15px !important;
     }
+
+    #tabla_liquidacion tbody td.col-monto-adh {
+        background-color: #4f90a5 !important;
+        color: #ffffff !important;
+        font-weight: bold !important;
+    }
+}
+
+/* =================================================== */
+/* 7. COLUMNA MONTO ADH Y CATÁLOGO DE MÉDICOS          */
+/* =================================================== */
+.col-monto-adh,
+#tabla_liquidacion tbody td.col-monto-adh,
+#tabla_liquidacion tfoot td.col-monto-adh {
+    background-color: #4f90a5 !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+}
+
+#tabla_liquidacion tbody tr:hover td.col-monto-adh {
+    background-color: #3b7486 !important;
+    color: #ffffff !important;
+}
+
+.badge-especialidad {
+    background-color: #e0f2fe;
+    color: #0369a1;
+    font-weight: 600;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid #bae6fd;
 }

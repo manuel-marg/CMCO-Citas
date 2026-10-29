@@ -107,6 +107,19 @@ async function initApp() {
 
     // Configurar autocompletado de pacientes
     configurarAutocompletePacientes();
+
+    // Soporte para navegación directa por hash de URL (ej: #medicos, #liquidacion)
+    const initialHash = window.location.hash.replace('#', '');
+    if (initialHash && ['agenda', 'liquidacion', 'beneficios', 'pacientes', 'medicos'].includes(initialHash)) {
+        showSection(initialHash);
+    }
+
+    window.addEventListener('hashchange', () => {
+        const h = window.location.hash.replace('#', '');
+        if (h && ['agenda', 'liquidacion', 'beneficios', 'pacientes', 'medicos'].includes(h)) {
+            showSection(h);
+        }
+    });
 }
 
 /**
@@ -115,7 +128,7 @@ async function initApp() {
  * -------------------------------------------------------------
  */
 function showSection(sectionId) {
-    const sections = ['agenda', 'liquidacion', 'beneficios', 'pacientes'];
+    const sections = ['agenda', 'liquidacion', 'beneficios', 'pacientes', 'medicos'];
     sections.forEach(s => {
         const el = document.getElementById(`section-${s}`);
         const tab = document.getElementById(`tab-${s}`);
@@ -128,11 +141,17 @@ function showSection(sectionId) {
     if (activeEl) activeEl.classList.remove('d-none');
     if (activeTab) activeTab.classList.add('active');
 
+    // Mantener sincronizado el hash de la URL
+    if (window.location.hash !== '#' + sectionId) {
+        history.replaceState(null, '', '#' + sectionId);
+    }
+
     // Cargas perezosas según sección
     if (sectionId === 'agenda') cargarAgendaSegunVista();
     if (sectionId === 'liquidacion') cargarLiquidacion();
     if (sectionId === 'beneficios') cargarBeneficios();
     if (sectionId === 'pacientes') cargarDirectorioPacientes();
+    if (sectionId === 'medicos') cargarCatalogoMedicos();
 }
 
 /**
@@ -1213,7 +1232,7 @@ async function cargarLiquidacion() {
                         <td><span class="badge bg-success text-white">${l.citas_pagadas}</span></td>
                         <td>$${parseFloat(l.total_bruto).toFixed(2)}</td>
                         <td class="fw-bold">$${parseFloat(l.monto_cobrado).toFixed(2)}</td>
-                        <td class="bg-primary bg-opacity-10 fw-bold text-primary">$${parseFloat(l.monto_adh).toFixed(2)}</td>
+                        <td class="col-monto-adh fw-bold">$${parseFloat(l.monto_adh).toFixed(2)}</td>
                         <td class="bg-success bg-opacity-10 fw-bold text-success">$${parseFloat(l.monto_medico).toFixed(2)}</td>
                         <td class="no-print">
                             <button class="btn btn-sm btn-outline-primary py-0" onclick="verDetalleMedico(${l.medico_id}, '${l.medico}')">
@@ -1234,7 +1253,7 @@ async function cargarLiquidacion() {
                     <td>${tot.citas_pagadas}</td>
                     <td>$${parseFloat(tot.total_bruto).toFixed(2)}</td>
                     <td>$${parseFloat(tot.monto_cobrado).toFixed(2)}</td>
-                    <td class="bg-primary text-white">$${parseFloat(tot.monto_adh).toFixed(2)}</td>
+                    <td class="col-monto-adh fw-bold">$${parseFloat(tot.monto_adh).toFixed(2)}</td>
                     <td class="bg-success text-white">$${parseFloat(tot.monto_medico).toFixed(2)}</td>
                     <td class="no-print"></td>
                 </tr>
@@ -1666,6 +1685,282 @@ async function guardarPacienteDirectorio(e) {
         }
     } catch (err) {
         mostrarToast('Error de comunicación', 'danger');
+    }
+}
+
+/**
+ * -------------------------------------------------------------
+ * GESTIÓN Y CATÁLOGO DE MÉDICOS Y ESPECIALISTAS
+ * -------------------------------------------------------------
+ */
+let debounceBuscarMedicos = null;
+
+async function cargarCatalogoMedicos() {
+    const tbody = document.getElementById('tbody_medicos_catalogo');
+    if (!tbody) return;
+
+    const searchInput = document.getElementById('medicos_search_input');
+    const filtroEstado = document.getElementById('medicos_filtro_estado');
+
+    const search = searchInput ? searchInput.value.trim() : '';
+    const activo = filtroEstado ? filtroEstado.value : 'all';
+
+    tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-muted">Cargando catálogo de médicos...</td></tr>';
+
+    try {
+        const queryParams = new URLSearchParams();
+        if (search) queryParams.append('q', search);
+        if (activo) queryParams.append('activo', activo);
+
+        const res = await fetch(`api/medicos.php?${queryParams.toString()}`);
+        const json = await res.json();
+
+        if (json.success) {
+            const data = json.data;
+            AppState.catalogoMedicos = data.medicos;
+
+            // Actualizar Métricas
+            const metricTotal = document.getElementById('medicos_metric_total');
+            const metricActivos = document.getElementById('medicos_metric_activos');
+            const metricInactivos = document.getElementById('medicos_metric_inactivos');
+            if (metricTotal) metricTotal.innerText = data.total;
+            if (metricActivos) metricActivos.innerText = data.total_activos;
+            if (metricInactivos) metricInactivos.innerText = data.total_inactivos;
+
+            if (data.medicos.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-muted">No se encontraron médicos con los filtros aplicados.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            data.medicos.forEach(m => {
+                const esActivo = parseInt(m.activo) === 1;
+                const estadoBadge = esActivo
+                    ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle me-1"></i>Activo</span>'
+                    : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1"><i class="bi bi-dash-circle me-1"></i>Inactivo</span>';
+
+                const toggleBtn = esActivo
+                    ? `<button class="btn btn-sm btn-outline-warning py-0 px-2" onclick="toggleActivoMedico(${m.id}, 0)" title="Desactivar médico de la agenda">
+                         <i class="bi bi-pause-circle me-1"></i>Desactivar
+                       </button>`
+                    : `<button class="btn btn-sm btn-outline-success py-0 px-2" onclick="toggleActivoMedico(${m.id}, 1)" title="Activar médico en la agenda">
+                         <i class="bi bi-play-circle me-1"></i>Activar
+                       </button>`;
+
+                const totalCitas = parseInt(m.total_citas) || 0;
+                const citasBadge = totalCitas > 0
+                    ? `<span class="badge bg-light text-primary border fw-semibold">${totalCitas} citas</span>`
+                    : '<span class="text-muted small">Sin citas</span>';
+
+                html += `
+                    <tr class="${esActivo ? '' : 'opacity-75 bg-light'}">
+                        <td class="text-start ps-4 fw-bold ${esActivo ? 'text-primary' : 'text-muted'}">
+                            <i class="bi bi-person-fill me-1 text-muted"></i> ${m.nombre}
+                        </td>
+                        <td>
+                            <span class="badge-especialidad">${m.especialidad || 'General'}</span>
+                        </td>
+                        <td class="small text-muted">
+                            ${m.telefono ? `<i class="bi bi-telephone text-muted me-1"></i>${m.telefono}` : '<span class="text-muted fst-italic">No registrado</span>'}
+                        </td>
+                        <td>
+                            <span class="fw-bold">${parseFloat(m.porcentaje_honorario).toFixed(0)}%</span>
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">(50% ADH / ${parseFloat(m.porcentaje_honorario).toFixed(0)}% Méd.)</small>
+                        </td>
+                        <td>${citasBadge}</td>
+                        <td>${estadoBadge}</td>
+                        <td>
+                            <div class="d-flex align-items-center justify-content-center gap-1">
+                                <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="abrirModalEditarMedico(${m.id})" title="Editar especialidad o datos">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                ${toggleBtn}
+                                <button class="btn btn-sm btn-outline-danger py-0 px-2" onclick="eliminarMedico(${m.id}, '${m.nombre.replace(/'/g, "\\'")}', ${totalCitas})" title="Eliminar o retirar del catálogo">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+
+            // Mantener sincronizados los médicos activos en AppState y selects de la agenda
+            actualizarSelectsMedicos(data.medicos.filter(m => parseInt(m.activo) === 1));
+        } else {
+            tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-danger">${json.message || 'Error al cargar catálogo'}</td></tr>`;
+        }
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-danger">Error de comunicación: ${e.message}</td></tr>`;
+    }
+}
+
+function filtrarMedicosCatalogo(val) {
+    clearTimeout(debounceBuscarMedicos);
+    debounceBuscarMedicos = setTimeout(() => {
+        cargarCatalogoMedicos();
+    }, 250);
+}
+
+function abrirModalNuevoMedico() {
+    document.getElementById('medico_form_id').value = '0';
+    document.getElementById('medico_form_nombre').value = '';
+    document.getElementById('medico_form_especialidad').value = '';
+    document.getElementById('medico_form_porcentaje').value = '50.00';
+    document.getElementById('medico_form_telefono').value = '';
+    
+    document.getElementById('modalGuardarMedicoLabel').innerHTML = '<i class="bi bi-person-plus-fill me-1"></i> Registrar Doctor / Especialista';
+    document.getElementById('btn_guardar_medico').innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Doctor';
+
+    const modal = new bootstrap.Modal(document.getElementById('modalGuardarMedico'));
+    modal.show();
+}
+
+function abrirModalEditarMedico(id) {
+    if (!AppState.catalogoMedicos) return;
+    const medico = AppState.catalogoMedicos.find(m => m.id == id);
+    if (!medico) return;
+
+    document.getElementById('medico_form_id').value = medico.id;
+    document.getElementById('medico_form_nombre').value = medico.nombre;
+    document.getElementById('medico_form_especialidad').value = medico.especialidad || '';
+    document.getElementById('medico_form_porcentaje').value = parseFloat(medico.porcentaje_honorario || 50).toFixed(2);
+    document.getElementById('medico_form_telefono').value = medico.telefono || '';
+
+    document.getElementById('modalGuardarMedicoLabel').innerHTML = '<i class="bi bi-pencil-square me-1"></i> Editar Doctor / Especialista';
+    document.getElementById('btn_guardar_medico').innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Actualizar Doctor';
+
+    const modal = new bootstrap.Modal(document.getElementById('modalGuardarMedico'));
+    modal.show();
+}
+
+async function guardarMedico(event) {
+    event.preventDefault();
+    const id = parseInt(document.getElementById('medico_form_id').value) || 0;
+    const nombre = document.getElementById('medico_form_nombre').value.trim();
+    const especialidad = document.getElementById('medico_form_especialidad').value.trim();
+    const porcentaje = parseFloat(document.getElementById('medico_form_porcentaje').value) || 50.00;
+    const telefono = document.getElementById('medico_form_telefono').value.trim();
+
+    if (!nombre) {
+        mostrarToast('El nombre del médico es obligatorio', 'warning');
+        return;
+    }
+
+    const payload = {
+        id: id,
+        nombre: nombre,
+        especialidad: especialidad || 'Medicina General',
+        porcentaje_honorario: porcentaje,
+        telefono: telefono
+    };
+
+    try {
+        const btn = document.getElementById('btn_guardar_medico');
+        const btnHtmlOriginal = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Guardando...';
+
+        const res = await fetch('api/medicos.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = btnHtmlOriginal;
+
+        if (json.success) {
+            bootstrap.Modal.getInstance(document.getElementById('modalGuardarMedico')).hide();
+            mostrarToast(json.message || 'Doctor guardado exitosamente');
+            cargarCatalogoMedicos();
+        } else {
+            mostrarToast(json.message || 'Error al guardar médico', 'danger');
+        }
+    } catch (err) {
+        mostrarToast('Error de comunicación con el servidor', 'danger');
+    }
+}
+
+async function toggleActivoMedico(id, nuevoEstado) {
+    try {
+        const res = await fetch('api/medicos.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'toggle_activo', id: id, activo: nuevoEstado })
+        });
+        const json = await res.json();
+        if (json.success) {
+            mostrarToast(json.message);
+            cargarCatalogoMedicos();
+        } else {
+            mostrarToast(json.message || 'Error al cambiar estado', 'danger');
+        }
+    } catch (err) {
+        mostrarToast('Error de comunicación', 'danger');
+    }
+}
+
+async function eliminarMedico(id, nombre, totalCitas) {
+    let mensajeConfirm = '';
+    if (totalCitas > 0) {
+        mensajeConfirm = `El doctor "${nombre}" tiene ${totalCitas} citas asociadas en el historial.\n\nPara no alterar las liquidaciones y reportes pasados, se DESACTIVARÁ del catálogo (ya no aparecerá para agendar nuevas citas).\n\n¿Deseas continuar?`;
+    } else {
+        mensajeConfirm = `¿Estás seguro de que deseas eliminar permanentemente al doctor "${nombre}" del catálogo?`;
+    }
+
+    if (!confirm(mensajeConfirm)) return;
+
+    try {
+        const res = await fetch('api/medicos.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'eliminar', id: id })
+        });
+        const json = await res.json();
+        if (json.success) {
+            mostrarToast(json.message);
+            cargarCatalogoMedicos();
+        } else {
+            mostrarToast(json.message || 'Error al procesar la solicitud', 'danger');
+        }
+    } catch (err) {
+        mostrarToast('Error de comunicación', 'danger');
+    }
+}
+
+function actualizarSelectsMedicos(medicosActivos) {
+    if (!Array.isArray(medicosActivos)) return;
+    AppState.medicos = medicosActivos;
+
+    // Actualizar select de agendar cita
+    const selectMed = document.getElementById('agendar_medico_id');
+    if (selectMed) {
+        const valorActual = selectMed.value;
+        selectMed.innerHTML = '';
+        medicosActivos.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.text = `${m.nombre} (${m.especialidad})`;
+            selectMed.appendChild(opt);
+        });
+        if (valorActual) selectMed.value = valorActual;
+    }
+
+    // Actualizar filtro de médicos de la agenda
+    const selFiltro = document.getElementById('filtro_medico_agenda');
+    if (selFiltro) {
+        const valorActual = selFiltro.value;
+        selFiltro.innerHTML = '<option value="">Todos los médicos</option>';
+        medicosActivos.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.text = m.nombre;
+            selFiltro.appendChild(opt);
+        });
+        if (valorActual) selFiltro.value = valorActual;
     }
 }
 
