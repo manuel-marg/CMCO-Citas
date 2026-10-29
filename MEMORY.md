@@ -127,6 +127,7 @@ El análisis de las fórmulas de las columnas `AE` a `AL` del Excel original rev
 * **Filtros Plegables:** Controles de búsqueda y filtros agrupados bajo un botón colapsable `[ Filtrar ]` para maximizar el área visible de la matriz de consultorios.
 * **Degradado del Navbar:** Configurado con un degradado armónico corporativo `linear-gradient(135deg, #1d4353 0%, #387387 50%, #4f90a5 100%)`, pasando de un tono petróleo profundo a la izquierda (que maximiza el contraste del logo y texto blanco) hasta el color corporativo `#4f90a5` hacia la derecha.
 * **Paleta de Color Primario Institucional:** Sustitución global del azul genérico `#0d6efd` por el tono corporativo azul petróleo/verde azulado `#4f90a5` (RGB: 79, 144, 165), alineado con el escudo del centro médico. Afecta a botones primarios (`.btn-primary`), botones outline (`.btn-outline-primary`), insignias (`.badge.bg-primary`), bordes de tarjetas de citas agendadas y acentos activos en toda la interfaz.
+* **Formato de Horas (12h con AM/PM):** Visualización universal en formato de 12 horas (`08:00 AM` a `08:00 PM`) en la columna de turnos de la vista diaria, tarjetas semanales, calendario mensual y modales operativos, corrigiendo cualquier concatenación híbrida (como `13 PM`).
 
 ---
 
