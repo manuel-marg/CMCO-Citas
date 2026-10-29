@@ -102,6 +102,8 @@
                                    list="lista_especialidades_sugeridas" placeholder="Ej: Medicina General, Pediatría..." required>
                             <datalist id="lista_especialidades_sugeridas">
                                 <option value="Medicina General">
+                                <option value="Laboratorio Clínico">
+                                <option value="Exámenes de Laboratorio">
                                 <option value="Pediatría">
                                 <option value="Cardiología">
                                 <option value="Ginecología y Obstetricia">
@@ -119,7 +121,7 @@
                     <div class="row g-2 mb-2">
                         <div class="col-md-6">
                             <label for="medico_form_porcentaje" class="form-label small fw-bold text-dark mb-1">
-                                % Honorario Médico
+                                % Honorario (Médico / Lab.)
                             </label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-light">%</span>
@@ -127,7 +129,7 @@
                                        id="medico_form_porcentaje" value="50.00" required>
                             </div>
                             <div class="form-text small text-muted" style="font-size: 0.72rem;">
-                                Modelo estándar: 50% (50% ADH / 50% Médico).
+                                Ej: 50% Médicos (50% ADH) o 80% Laboratorio (20% ADH).
                             </div>
                         </div>
                         <div class="col-md-6">

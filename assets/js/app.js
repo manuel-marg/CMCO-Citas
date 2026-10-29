@@ -1744,6 +1744,13 @@ async function cargarCatalogoMedicos() {
                     ? `<span class="badge bg-light text-primary border fw-semibold">${totalCitas} citas</span>`
                     : '<span class="text-muted small">Sin citas</span>';
 
+                const pctHonorario = parseFloat(m.porcentaje_honorario) || 50.0;
+                const pctAdh = Math.max(0, 100.0 - pctHonorario);
+                const nombreLower = (m.nombre || '').toLowerCase();
+                const espLower = (m.especialidad || '').toLowerCase();
+                const esLab = nombreLower.includes('lab') || espLower.includes('lab');
+                const etiquetaRol = esLab ? 'Lab.' : 'Méd.';
+
                 html += `
                     <tr class="${esActivo ? '' : 'opacity-75 bg-light'}">
                         <td class="text-start ps-4 fw-bold ${esActivo ? 'text-primary' : 'text-muted'}">
@@ -1756,8 +1763,8 @@ async function cargarCatalogoMedicos() {
                             ${m.telefono ? `<i class="bi bi-telephone text-muted me-1"></i>${m.telefono}` : '<span class="text-muted fst-italic">No registrado</span>'}
                         </td>
                         <td>
-                            <span class="fw-bold">${parseFloat(m.porcentaje_honorario).toFixed(0)}%</span>
-                            <small class="text-muted d-block" style="font-size: 0.72rem;">(50% ADH / ${parseFloat(m.porcentaje_honorario).toFixed(0)}% Méd.)</small>
+                            <span class="fw-bold">${pctHonorario.toFixed(0)}%</span>
+                            <small class="text-muted d-block" style="font-size: 0.72rem;">(${pctAdh.toFixed(0)}% ADH / ${pctHonorario.toFixed(0)}% ${etiquetaRol})</small>
                         </td>
                         <td>${citasBadge}</td>
                         <td>${estadoBadge}</td>

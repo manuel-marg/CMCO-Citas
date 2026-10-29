@@ -21,40 +21,43 @@ $mes = $_GET['mes'] ?? date('Y-m');
 $fecha_inicio = "{$mes}-01";
 $fecha_fin = date('Y-m-t', strtotime($fecha_inicio));
 
-// Consulta SQL con la lógica de negocio exacta (50% ADH / 50% Médico)
+// Consulta SQL con la lógica de negocio según porcentaje de honorario asignado a cada profesional/laboratorio
 $sql = "
     SELECT 
         m.id AS medico_id,
         m.nombre AS medico,
         m.especialidad,
+        m.porcentaje_honorario,
         COUNT(CASE WHEN c.estado IN ('Pagado', 'Facturado', 'Completado', 'Atendido') THEN 1 END) AS cantidad_citas,
         COUNT(CASE WHEN c.estado IN ('Pagado', 'Facturado') THEN 1 END) AS citas_pagadas,
         COALESCE(SUM(CASE WHEN c.estado IN ('Pagado', 'Facturado') THEN c.precio_usd ELSE 0 END), 0) AS total_bruto,
         
-        -- Monto Cobrado en caja física: Particular + 50% Familiar + 50% Exonerado ADH + 50% Exonerado Doctor
+        -- Monto Cobrado en caja física: Particular + % Honorario en Familiar y Exonerado ADH + % ADH en Exonerado Doctor
         COALESCE(SUM(CASE 
             WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo = 'Particular' THEN c.precio_usd
-            WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo IN ('Familiar', 'Exonerado ADH', 'Exonerado Doctor') THEN c.precio_usd * 0.5
+            WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo IN ('Familiar', 'Exonerado ADH') THEN c.precio_usd * (COALESCE(m.porcentaje_honorario, 50.0) / 100.0)
+            WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo = 'Exonerado Doctor' THEN c.precio_usd * ((100.0 - COALESCE(m.porcentaje_honorario, 50.0)) / 100.0)
             ELSE 0 
         END), 0) AS monto_cobrado,
         
-        -- Monto ADH (Centro Médico): 50% Particular + 50% Exonerado Doctor
+        -- Monto ADH (Centro Médico): (100 - %Honorario)% sobre Particular y Exonerado Doctor
         COALESCE(SUM(CASE 
-            WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo = 'Particular' THEN c.precio_usd * 0.5
-            WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo = 'Exonerado Doctor' THEN c.precio_usd * 0.5
+            WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo IN ('Particular', 'Exonerado Doctor') 
+                THEN c.precio_usd * ((100.0 - COALESCE(m.porcentaje_honorario, 50.0)) / 100.0)
             ELSE 0 
         END), 0) AS monto_adh,
         
-        -- Monto Médico: 50% sobre Particular, Familiar, Participante, Empleado, Exonerado ADH
+        -- Monto Médico / Laboratorio: %Honorario sobre Particular, Familiar, Participante, Empleado, Exonerado ADH
         COALESCE(SUM(CASE 
-            WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo IN ('Particular', 'Familiar', 'Participante', 'Empleado', 'Exonerado ADH') THEN c.precio_usd * 0.5
+            WHEN c.estado IN ('Pagado', 'Facturado') AND c.tipo IN ('Particular', 'Familiar', 'Participante', 'Empleado', 'Exonerado ADH') 
+                THEN c.precio_usd * (COALESCE(m.porcentaje_honorario, 50.0) / 100.0)
             ELSE 0 
         END), 0) AS monto_medico
 
     FROM medicos m
     LEFT JOIN citas c ON c.medico_id = m.id AND c.fecha BETWEEN :fini AND :ffin
     WHERE m.activo = 1
-    GROUP BY m.id, m.nombre, m.especialidad
+    GROUP BY m.id, m.nombre, m.especialidad, m.porcentaje_honorario
     ORDER BY m.nombre ASC
 ";
 
