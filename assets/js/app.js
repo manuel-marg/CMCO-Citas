@@ -26,6 +26,49 @@ const AppState = {
     citaSeleccionada: null
 };
 
+/**
+ * -------------------------------------------------------------
+ * UTILIDADES DE FORMATEO DE HORAS (12 Horas con AM/PM)
+ * -------------------------------------------------------------
+ */
+
+/**
+ * Convierte cualquier formato de hora militar ('HH:mm:ss' o 'HH:mm')
+ * a formato estándar de 12 horas con indicador AM/PM (ej: '01:00 PM', '08:00 AM')
+ */
+function formatearHora12(horaStr, conCero = true) {
+    if (!horaStr) return '';
+    const partes = horaStr.split(':');
+    let horas = parseInt(partes[0], 10);
+    const minutos = partes[1] || '00';
+    if (isNaN(horas)) return horaStr;
+    const ampm = horas >= 12 ? 'PM' : 'AM';
+    horas = horas % 12;
+    horas = horas ? horas : 12;
+    const horasStr = conCero ? String(horas).padStart(2, '0') : String(horas);
+    return `${horasStr}:${minutos} ${ampm}`;
+}
+
+/**
+ * Desglosa la hora en formato 12 horas separando la hora numérica y el indicador AM/PM
+ * ej: { hora: '01:00', ampm: 'PM' } para '13:00:00'
+ */
+function obtenerComponentesHora12(horaStr) {
+    if (!horaStr) return { hora: '', ampm: '' };
+    const partes = horaStr.split(':');
+    let horas = parseInt(partes[0], 10);
+    const minutos = partes[1] || '00';
+    if (isNaN(horas)) return { hora: horaStr, ampm: '' };
+    const ampm = horas >= 12 ? 'PM' : 'AM';
+    horas = horas % 12;
+    horas = horas ? horas : 12;
+    const horasStr = String(horas).padStart(2, '0');
+    return {
+        hora: `${horasStr}:${minutos}`,
+        ampm: ampm
+    };
+}
+
 // Inicialización
 document.addEventListener('DOMContentLoaded', () => {
     initApp();
@@ -324,14 +367,14 @@ function renderizarVistaDia() {
     }
 
     horarios.forEach(hora => {
-        const horaLabel = AppState.horarios[hora];
+        const comp = obtenerComponentesHora12(hora);
         
         html += `
             <div class="row g-0 slot-row">
-                <!-- Columna Hora -->
+                <!-- Columna Hora (Formato 12h con AM/PM) -->
                 <div class="col-1 time-cell">
-                    <span>${hora.slice(0, 5)}</span>
-                    <small class="text-muted" style="font-size: 0.7rem;">${horaLabel.slice(-2)}</small>
+                    <span>${comp.hora}</span>
+                    <small class="text-muted" style="font-size: 0.72rem; font-weight: 600;">${comp.ampm}</small>
                 </div>
         `;
 
@@ -458,7 +501,7 @@ function renderizarVistaSemana() {
                 html += `
                     <div class="week-cita-item" style="border-left-color: ${estadoInfo.color};" onclick="abrirDetalleCita(${c.id})">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-bold small text-dark">${c.hora.slice(0, 5)}</span>
+                            <span class="fw-bold small text-dark">${formatearHora12(c.hora)}</span>
                             <span class="badge ${badgeConsClass}" style="font-size: 0.68rem;" title="${c.consultorio_nombre}">${consAbbr}</span>
                         </div>
                         <div class="fw-bold text-truncate" style="font-size: 0.84rem;" title="${c.paciente_nombre}">
@@ -554,8 +597,8 @@ function renderizarVistaMes() {
         mostrar.forEach(cita => {
             const estadoInfo = AppState.estados[cita.estado] || { color: '#4f90a5' };
             html += `
-                <div class="cal-cita-chip" style="border-left-color: ${estadoInfo.color};" title="${cita.hora.slice(0, 5)} - ${cita.paciente_nombre} (${cita.medico_nombre})">
-                    <strong>${cita.hora.slice(0, 5)}</strong> ${cita.paciente_nombre}
+                <div class="cal-cita-chip" style="border-left-color: ${estadoInfo.color};" title="${formatearHora12(cita.hora)} - ${cita.paciente_nombre} (${cita.medico_nombre})">
+                    <strong>${formatearHora12(cita.hora)}</strong> ${cita.paciente_nombre}
                 </div>
             `;
         });
@@ -844,7 +887,7 @@ function abrirDetalleCita(citaId) {
     document.getElementById('det_paciente_cedula_tel').innerText = 
         `C.I: ${cita.paciente_cedula || 'S/C'} · Teléfono: ${cita.paciente_telefono || 'No registrado'}`;
     
-    document.getElementById('det_hora').innerText = cita.hora.slice(0, 5);
+    document.getElementById('det_hora').innerText = formatearHora12(cita.hora);
     document.getElementById('det_consultorio').innerText = cita.consultorio_nombre;
     document.getElementById('det_medico').innerText = cita.medico_nombre;
     document.getElementById('det_tipo').innerText = cita.tipo;
@@ -939,7 +982,7 @@ function abrirCobroDesdeDetalle() {
     document.getElementById('cobrar_cita_id').value = cita.id;
     document.getElementById('cobrar_paciente_nombre').innerText = cita.paciente_nombre;
     document.getElementById('cobrar_info_adicional').innerText = 
-        `${cita.medico_nombre} · ${cita.consultorio_nombre} · ${cita.hora.slice(0, 5)} · Tipo: ${cita.tipo}`;
+        `${cita.medico_nombre} · ${cita.consultorio_nombre} · ${formatearHora12(cita.hora)} · Tipo: ${cita.tipo}`;
 
     // Llenar formas de pago
     const sForma1 = document.getElementById('cobrar_forma_1');
@@ -1150,7 +1193,7 @@ async function verDetalleMedico(medicoId, nombreMedico) {
                 html += `
                     <tr>
                         <td>${c.fecha}</td>
-                        <td>${c.hora.slice(0, 5)}</td>
+                        <td>${formatearHora12(c.hora)}</td>
                         <td>${c.consultorio_nombre}</td>
                         <td class="text-start ps-2 fw-bold">${c.paciente_nombre}</td>
                         <td>${c.paciente_cedula || '-'}</td>
@@ -1359,7 +1402,7 @@ async function verHistorialPaciente(pacienteId) {
                     html += `
                         <tr>
                             <td>${c.fecha}</td>
-                            <td>${c.hora.slice(0, 5)}</td>
+                            <td>${formatearHora12(c.hora)}</td>
                             <td>${c.consultorio_nombre}</td>
                             <td>${c.medico_nombre}</td>
                             <td><span class="badge bg-secondary">${c.estado}</span></td>
