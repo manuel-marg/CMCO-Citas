@@ -116,6 +116,7 @@ El análisis de las fórmulas de las columnas `AE` a `AL` del Excel original rev
 ## 6. Lecciones Aprendidas y Puntos de Atención
 * **Disponibilidad Offline:** Las clínicas a veces sufren micro-cortes de internet. Si el BCV no responde, el sistema debe permitir ingresar o mantener la última tasa BCV registrada en la base de datos sin trabar el cobro de la recepción.
 * **Cédulas Duplicadas:** En Venezuela es común que los menores de edad no tengan cédula propia y se registre la del representante, o bien `0` o `S/C`. El campo cédula no debe ser `UNIQUE` estricto a nivel de base de datos para no bloquear el registro de niños que comparten cédula de su representante.
+* **Codificación UTF-8 e Integridad de Nombres:** En Windows, el pipe estándar de PowerShell hacia `mysql.exe` procesa la entrada en codificación ANSI si no se especifica expresamente UTF-8, lo que provocaba que vocales con tilde (`á`, `é`, `í`, `ó`, `ú`, `ñ`) se convirtieran en signos de interrogación `?`. Para garantizar la integridad ortográfica del catálogo de pacientes y citas, se debe ejecutar la carga a través de conexiones PDO (`utf8mb4`) o usando el script automatizado [`database/repair_utf8.php`](file:///c:/xampp/htdocs/CMCO-Citas/database/repair_utf8.php).
 
 ---
 
