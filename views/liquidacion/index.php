@@ -21,7 +21,7 @@
         <!-- Barra de Control (Oculta al imprimir) -->
         <div class="agenda-bar mb-3 no-print">
             <div class="row g-3 align-items-center">
-                <div class="col-xl-4 col-lg-4 col-md-12">
+                <div class="col-xl-5 col-lg-5 col-md-12">
                     <h4 class="fw-bold mb-1 text-primary">
                         <i class="bi bi-calculator me-1"></i> Honorarios Médicos
                     </h4>
@@ -29,19 +29,19 @@
                         Cálculo automático de honorarios médicos según el porcentaje.
                     </p>
                 </div>
-                <div class="col-xl-3 col-lg-3 col-md-6 d-flex align-items-center gap-2">
+                <div class="col-xl-4 col-lg-4 col-md-6 d-flex align-items-center gap-2">
                     <label class="form-label mb-0 fw-bold small text-muted">Mes:</label>
                     <input type="month" class="form-control fw-bold border-primary" id="liq_mes_selector" onchange="cargarLiquidacion()">
-                    <button class="btn btn-primary" onclick="cargarLiquidacion()" title="Recargar liquidación">
+                    <button class="btn btn-primary" onclick="cargarLiquidacion()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Recargar liquidación">
                         <i class="bi bi-arrow-repeat"></i>
                     </button>
                 </div>
-                <div class="col-xl-5 col-lg-5 col-md-6 text-lg-end d-flex align-items-center justify-content-lg-end gap-2 flex-wrap">
-                    <button class="btn btn-primary fw-bold shadow-sm" onclick="exportarLiquidacionPDF()" title="Generar documento PDF oficial en orientación horizontal">
-                        <i class="bi bi-file-earmark-pdf-fill me-1"></i> Exportar a PDF
+                <div class="col-xl-3 col-lg-3 col-md-6 text-md-end d-flex align-items-center justify-content-md-end gap-2">
+                    <button class="btn btn-primary fw-bold shadow-sm" onclick="exportarLiquidacionPDF()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Exportar a PDF">
+                        <i class="bi bi-file-earmark-pdf-fill"></i>
                     </button>
-                    <button class="btn btn-outline-primary fw-bold shadow-sm" onclick="showSection('medicos')" title="Administrar catálogo de doctores y especialistas">
-                        <i class="bi bi-person-gear me-1"></i> Gestionar Doctores
+                    <button class="btn btn-outline-primary fw-bold shadow-sm" onclick="showSection('medicos')" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Gestionar Doctores">
+                        <i class="bi bi-person-gear"></i>
                     </button>
                 </div>
             </div>

@@ -114,12 +114,28 @@ async function initApp() {
         showSection(initialHash);
     }
 
+    // Inicializar tooltips de Bootstrap
+    inicializarTooltips();
+
     window.addEventListener('hashchange', () => {
         const h = window.location.hash.replace('#', '');
         if (h && ['agenda', 'liquidacion', 'beneficios', 'pacientes', 'medicos'].includes(h)) {
             showSection(h);
         }
     });
+}
+
+function inicializarTooltips() {
+    try {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(el => {
+            if (!bootstrap.Tooltip.getInstance(el)) {
+                new bootstrap.Tooltip(el);
+            }
+        });
+    } catch (e) {
+        // Fallback a titles nativos
+    }
 }
 
 /**
