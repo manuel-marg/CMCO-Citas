@@ -201,9 +201,12 @@ body {
 
 .slot-cell {
     border-right: 1px solid #f1f5f9;
-    padding: 0.5rem;
+    padding: 0.4rem;
     position: relative;
     vertical-align: top;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
 }
 
 .slot-cell:last-child {
@@ -216,13 +219,18 @@ body {
     border: 1px solid #cbd5e1;
     border-left: 5px solid var(--cmco-primary);
     border-radius: 8px;
-    padding: 0.6rem 0.75rem;
+    padding: 0.5rem 0.65rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-    height: 100%;
+    height: auto;
+    min-height: 85px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     transition: all 0.2s ease;
+}
+
+.slot-cell > .cita-card:only-child {
+    min-height: calc(105px - 0.8rem);
 }
 
 .cita-card:hover {

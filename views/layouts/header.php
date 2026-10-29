@@ -16,6 +16,6 @@ require_once __DIR__ . '/../../config/app.php';
     <link rel="stylesheet" href="assets/vendor/bootstrap/bootstrap-icons.min.css">
     
     <!-- Estilos Personalizados CMCO -->
-    <link rel="stylesheet" href="assets/css/custom.css">
+    <link rel="stylesheet" href="assets/css/custom.css?v=<?= filemtime(__DIR__ . '/../../assets/css/custom.css') ?>">
 </head>
 <body>
