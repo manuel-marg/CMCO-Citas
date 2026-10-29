@@ -6,6 +6,39 @@ $pdo = Database::getConnection();
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
+    // Consulta individual por ID de cita
+    if (isset($_GET['id'])) {
+        $id = (int)$_GET['id'];
+        $stmt = $pdo->prepare("
+            SELECT 
+                c.*,
+                p.nombre AS paciente_nombre,
+                p.cedula AS paciente_cedula,
+                p.telefono AS paciente_telefono,
+                p.representante AS paciente_representante,
+                p.tipo_beneficio AS paciente_tipo_beneficio,
+                m.nombre AS medico_nombre,
+                m.especialidad AS medico_especialidad,
+                cons.nombre AS consultorio_nombre,
+                cons.numero AS consultorio_numero
+            FROM citas c
+            INNER JOIN pacientes p ON p.id = c.paciente_id
+            INNER JOIN medicos m ON m.id = c.medico_id
+            INNER JOIN consultorios cons ON cons.id = c.consultorio_id
+            WHERE c.id = :id
+        ");
+        $stmt->execute([':id' => $id]);
+        $cita = $stmt->fetch();
+        if ($cita) {
+            $cstmt = $pdo->prepare("SELECT * FROM pagos_citas WHERE cita_id = :cid ORDER BY numero_pago ASC");
+            $cstmt->execute([':cid' => $id]);
+            $cita['pagos'] = $cstmt->fetchAll();
+            sendJsonResponse(true, $cita);
+        } else {
+            sendJsonResponse(false, null, 'Cita no encontrada', 404);
+        }
+    }
+
     // Soporte para rango de fechas (Semana o Mes) o fecha individual (Día)
     $fecha = $_GET['fecha'] ?? date('Y-m-d');
     $fecha_inicio = $_GET['fecha_inicio'] ?? null;
@@ -66,9 +99,12 @@ if ($method === 'GET') {
         $cstmt->execute([':cid' => $c['id']]);
         $c['pagos'] = $cstmt->fetchAll();
         
-        // Clave única para la celda diaria: "hora_consultorioId"
+        // Clave única para la celda diaria: "hora_consultorioId" (soporta múltiples citas por celda)
         $key = $c['hora'] . '_' . $c['consultorio_id'];
-        $citasMap[$key] = $c;
+        if (!isset($citasMap[$key])) {
+            $citasMap[$key] = [];
+        }
+        $citasMap[$key][] = $c;
 
         // Agrupación por día para vistas semanal y mensual
         $diaKey = $c['fecha'];
@@ -77,6 +113,7 @@ if ($method === 'GET') {
         }
         $citasPorDia[$diaKey][] = $c;
     }
+    unset($c);
 
     // Obtener catálogo de consultorios
     $consultorios = $pdo->query("SELECT * FROM consultorios WHERE activo = 1 ORDER BY numero ASC")->fetchAll();

@@ -399,50 +399,52 @@ function renderizarVistaDia() {
         // Columnas de Consultorios
         consultorios.forEach(cons => {
             const key = `${hora}_${cons.id}`;
-            const cita = AppState.citasMap[key];
+            const slotData = AppState.citasMap[key];
+            const citasEnSlot = Array.isArray(slotData) ? slotData : (slotData ? [slotData] : []);
+
+            // Filtrar por médico si aplica
+            const citasFiltradas = AppState.filtroMedico 
+                ? citasEnSlot.filter(c => c.medico_id == AppState.filtroMedico) 
+                : citasEnSlot;
 
             html += `<div class="col slot-cell">`;
 
-            if (cita) {
-                // Verificar filtro de médico si aplica
-                if (AppState.filtroMedico && cita.medico_id != AppState.filtroMedico) {
-                    html += `</div>`;
-                    return;
-                }
+            if (citasFiltradas.length > 0) {
+                citasFiltradas.forEach(cita => {
+                    const estadoInfo = AppState.estados[cita.estado] || { emoji: '📌', label: cita.estado, badge: 'primary', color: '#4f90a5' };
+                    const precio = parseFloat(cita.precio_usd || 0);
+                    const precioBadgeClass = cita.estado === 'Facturado' ? 'bg-dark' : (cita.estado === 'Pagado' ? 'bg-success' : 'bg-primary');
 
-                const estadoInfo = AppState.estados[cita.estado] || { emoji: '📌', badge: 'primary', color: '#4f90a5' };
-                const precio = parseFloat(cita.precio_usd);
-                const precioBadgeClass = cita.estado === 'Facturado' ? 'bg-dark' : (cita.estado === 'Pagado' ? 'bg-success' : 'bg-primary');
-
-                html += `
-                    <div class="cita-card" style="border-left-color: ${estadoInfo.color}; cursor: pointer;" onclick="abrirDetalleCita(${cita.id})">
-                        <div>
-                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                <span class="badge bg-${estadoInfo.badge} text-white" style="font-size: 0.72rem;">
-                                    ${estadoInfo.emoji} ${estadoInfo.label}
-                                </span>
-                                <span class="cita-precio-badge ${precioBadgeClass} text-white">
-                                    $${precio.toFixed(0)}
-                                </span>
+                    html += `
+                        <div class="cita-card mb-1" style="border-left-color: ${estadoInfo.color}; cursor: pointer;" onclick="abrirDetalleCita(${cita.id})">
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="badge bg-${estadoInfo.badge} text-white" style="font-size: 0.72rem;">
+                                        ${estadoInfo.emoji} ${estadoInfo.label}
+                                    </span>
+                                    <span class="cita-precio-badge ${precioBadgeClass} text-white">
+                                        $${precio.toFixed(0)}
+                                    </span>
+                                </div>
+                                <div class="cita-paciente text-truncate" title="${cita.paciente_nombre}">
+                                    ${cita.paciente_nombre}
+                                </div>
+                                <div class="cita-subinfo text-truncate">
+                                    ${cita.paciente_cedula ? `C.I: ${cita.paciente_cedula}` : ''} 
+                                    ${cita.paciente_telefono ? `· Tel: ${cita.paciente_telefono}` : ''}
+                                </div>
                             </div>
-                            <div class="cita-paciente text-truncate" title="${cita.paciente_nombre}">
-                                ${cita.paciente_nombre}
-                            </div>
-                            <div class="cita-subinfo text-truncate">
-                                ${cita.paciente_cedula ? `C.I: ${cita.paciente_cedula}` : ''} 
-                                ${cita.paciente_telefono ? `· Tel: ${cita.paciente_telefono}` : ''}
+                            <div class="mt-2 pt-1 border-top d-flex justify-content-between align-items-center">
+                                <span class="cita-medico text-truncate" title="${cita.medico_nombre}">
+                                    <i class="bi bi-person-fill"></i> ${cita.medico_nombre}
+                                </span>
+                                <span class="badge bg-light text-muted border" style="font-size: 0.68rem;">
+                                    ${cita.tipo}
+                                </span>
                             </div>
                         </div>
-                        <div class="mt-2 pt-1 border-top d-flex justify-content-between align-items-center">
-                            <span class="cita-medico text-truncate" title="${cita.medico_nombre}">
-                                <i class="bi bi-person-fill"></i> ${cita.medico_nombre}
-                            </span>
-                            <span class="badge bg-light text-muted border" style="font-size: 0.68rem;">
-                                ${cita.tipo}
-                            </span>
-                        </div>
-                    </div>
-                `;
+                    `;
+                });
             } else {
                 html += `
                     <button class="btn-empty-slot" onclick="abrirModalNuevoAgendamiento('${hora}', ${cons.id}, '${AppState.fechaActual}')">
@@ -617,7 +619,10 @@ function renderizarVistaMes() {
             const nombreCorto = acortarNombre(cita.paciente_nombre, 2);
             const emojiHtml = estadoInfo.emoji ? `<span class="cita-chip-emoji">${estadoInfo.emoji}</span>` : '';
             html += `
-                <div class="cal-cita-chip" style="border-left-color: ${estadoInfo.color};" title="${formatearHora12(cita.hora)} ${estadoInfo.emoji || ''} ${cita.paciente_nombre} · ${cita.medico_nombre} (${estadoInfo.label || cita.estado})">
+                <div class="cal-cita-chip" 
+                     style="border-left-color: ${estadoInfo.color}; cursor: pointer;" 
+                     onclick="event.stopPropagation(); abrirDetalleCita(${cita.id})"
+                     title="${formatearHora12(cita.hora)} ${estadoInfo.emoji || ''} ${cita.paciente_nombre} · ${cita.medico_nombre} (${estadoInfo.label || cita.estado}) - Clic para ver y editar">
                     <strong>${formatearHora12(cita.hora)}</strong> ${emojiHtml} ${nombreCorto}
                 </div>
             `;
@@ -897,9 +902,57 @@ async function guardarCita(e) {
  * MODAL: DETALLE Y CAMBIO DE ESTADO
  * -------------------------------------------------------------
  */
-function abrirDetalleCita(citaId) {
-    const cita = AppState.citasActuales.find(c => c.id == citaId);
-    if (!cita) return;
+async function abrirDetalleCita(citaId) {
+    if (!citaId) return;
+
+    // 1. Buscar en AppState.citasActuales
+    let cita = AppState.citasActuales ? AppState.citasActuales.find(c => c.id == citaId) : null;
+
+    // 2. Si no se encuentra, buscar en AppState.citasPorDia
+    if (!cita && AppState.citasPorDia) {
+        for (const dia in AppState.citasPorDia) {
+            const encontrada = AppState.citasPorDia[dia].find(c => c.id == citaId);
+            if (encontrada) {
+                cita = encontrada;
+                break;
+            }
+        }
+    }
+
+    // 3. Si no se encuentra, buscar en AppState.citasMap
+    if (!cita && AppState.citasMap) {
+        for (const k in AppState.citasMap) {
+            const val = AppState.citasMap[k];
+            if (Array.isArray(val)) {
+                const encontrada = val.find(c => c.id == citaId);
+                if (encontrada) {
+                    cita = encontrada;
+                    break;
+                }
+            } else if (val && val.id == citaId) {
+                cita = val;
+                break;
+            }
+        }
+    }
+
+    // 4. Si aún no está en memoria, consultar endpoint directamente
+    if (!cita) {
+        try {
+            const res = await fetch(`api/citas.php?id=${citaId}`);
+            const json = await res.json();
+            if (json.success && json.data) {
+                cita = json.data;
+            }
+        } catch (e) {
+            console.error('Error al obtener cita remota:', e);
+        }
+    }
+
+    if (!cita) {
+        mostrarToast('No se encontró la información de la cita', 'warning');
+        return;
+    }
 
     AppState.citaSeleccionada = cita;
     document.getElementById('estado_cita_id').value = cita.id;
@@ -935,7 +988,7 @@ function abrirDetalleCita(citaId) {
         const lista = document.getElementById('det_pagos_lista');
         lista.innerHTML = '';
         cita.pagos.forEach(p => {
-            lista.innerHTML += `<div>· ${p.forma_pago}: $${parseFloat(p.monto_usd).toFixed(2)} (Bs. ${formatearNumero(p.monto_bs, 2)}) ${p.referencia ? `Ref: ${p.referencia}` : ''}</div>`;
+            lista.innerHTML += `<div class="text-truncate">· ${p.forma_pago}: $${parseFloat(p.monto_usd).toFixed(2)} (Bs. ${formatearNumero(p.monto_bs, 2)}) ${p.referencia ? `Ref: ${p.referencia}` : ''}</div>`;
         });
         pagosBox.classList.remove('d-none');
     } else {
