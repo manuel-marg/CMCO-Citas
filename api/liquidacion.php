@@ -14,7 +14,7 @@ $sql = "
         m.id AS medico_id,
         m.nombre AS medico,
         m.especialidad,
-        COUNT(CASE WHEN c.estado IN ('Pagado', 'Facturado', 'Completado') THEN 1 END) AS cantidad_citas,
+        COUNT(CASE WHEN c.estado IN ('Pagado', 'Facturado', 'Completado', 'Atendido') THEN 1 END) AS cantidad_citas,
         COUNT(CASE WHEN c.estado IN ('Pagado', 'Facturado') THEN 1 END) AS citas_pagadas,
         COALESCE(SUM(CASE WHEN c.estado IN ('Pagado', 'Facturado') THEN c.precio_usd ELSE 0 END), 0) AS total_bruto,
         

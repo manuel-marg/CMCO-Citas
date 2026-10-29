@@ -105,7 +105,7 @@ if ($method === 'GET') {
         $est = $c['estado'];
         if ($est === 'Agendada') $metricas['agendadas']++;
         elseif ($est === 'Confirmado') $metricas['confirmadas']++;
-        elseif ($est === 'Completado') $metricas['completadas']++;
+        elseif ($est === 'Completado' || $est === 'Atendido') $metricas['completadas']++;
         elseif ($est === 'No asistio') $metricas['no_asistio']++;
         elseif ($est === 'Pagado') $metricas['pagadas']++;
         elseif ($est === 'Facturado') $metricas['facturadas']++;

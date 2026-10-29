@@ -13,7 +13,8 @@ const ESTADOS_CITAS = [
     'Agendada'      => ['emoji' => '📌', 'label' => 'Agendada',      'badge' => 'primary',   'color' => '#4f90a5'],
     'Sin confirmar' => ['emoji' => '📞', 'label' => 'Sin confirmar', 'badge' => 'warning',   'color' => '#ffc107'],
     'Confirmado'    => ['emoji' => '✔️', 'label' => 'Confirmado',    'badge' => 'info',      'color' => '#0dcaf0'],
-    'Completado'    => ['emoji' => '✅', 'label' => 'Completado',    'badge' => 'success',   'color' => '#198754'],
+    'Atendido'      => ['emoji' => '✅', 'label' => 'Atendido',      'badge' => 'success',   'color' => '#198754'],
+    'Completado'    => ['emoji' => '✅', 'label' => 'Atendido',      'badge' => 'success',   'color' => '#198754'],
     'No asistio'    => ['emoji' => '🚫', 'label' => 'No asistió',    'badge' => 'secondary', 'color' => '#6c757d'],
     'Pagado'        => ['emoji' => '💲', 'label' => 'Pagado',        'badge' => 'success',   'color' => '#20c997'],
     'Facturado'     => ['emoji' => '📦', 'label' => 'Facturado',     'badge' => 'dark',      'color' => '#6f42c1']

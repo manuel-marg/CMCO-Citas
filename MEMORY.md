@@ -19,12 +19,12 @@ El personal de recepción y caja está acostumbrado a una nomenclatura de estado
 1. 📌 **Agendada:** Cita reservada para el paciente en el horario respectivo.
 2. 📞 **Sin confirmar:** La recepcionista aún no ha podido contactar al paciente.
 3. ✔️ **Confirmado:** Paciente confirmó asistencia a la cita.
-4. ✅ **Completado:** El médico atendió al paciente en el consultorio.
+4. ✅ **Atendido:** El médico atendió al paciente en el consultorio (antes denominado Completado).
 5. 🚫 **No asistió:** El paciente faltó al turno.
 6. 💲 **Pagado:** El paciente canceló en recepción pero la factura formal está en proceso.
 7. 📦 **Facturado:** Cita formalmente facturada y asentada en el libro de ingresos.
 
-> **Regla de Conteo:** Las citas que se consideran formalmente efectivas para honorarios médicos son aquellas en estado **💲 (Pagado)** y **📦 (Facturado)** (y en estadísticas de asistencia se incluye **✅ Completado**).
+> **Regla de Conteo:** Las citas que se consideran formalmente efectivas para honorarios médicos son aquellas en estado **💲 (Pagado)** y **📦 (Facturado)** (y en estadísticas de asistencia se incluye **✅ Atendido / Completado**).
 
 ---
 

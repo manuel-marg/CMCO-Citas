@@ -103,9 +103,9 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
 
 -- Consultorios iniciales
 INSERT INTO `consultorios` (`nombre`, `numero`) VALUES
-('Consultorio N° 1', 1),
-('Consultorio N° 2', 2),
-('Consultorio N° 3', 3)
+('Consultorio 1', 1),
+('Consultorio 2', 2),
+('Consultorio 3', 3)
 ON DUPLICATE KEY UPDATE `numero` = VALUES(`numero`);
 
 -- Médicos del catálogo inicial
