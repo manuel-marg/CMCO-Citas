@@ -41,7 +41,7 @@
                         <i class="bi bi-file-earmark-pdf-fill me-1"></i> Exportar a PDF
                     </button>
                     <button class="btn btn-outline-primary fw-bold shadow-sm" onclick="showSection('medicos')" title="Administrar catálogo de doctores y especialistas">
-                        <i class="bi bi-person-gear me-1"></i> Agregar / Eliminar Doctores
+                        <i class="bi bi-person-gear me-1"></i> Gestionar Doctores
                     </button>
                 </div>
             </div>
