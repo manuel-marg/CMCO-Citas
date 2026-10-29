@@ -23,10 +23,10 @@
             <div class="row g-3 align-items-center">
                 <div class="col-xl-4 col-lg-4 col-md-12">
                     <h4 class="fw-bold mb-1 text-primary">
-                        <i class="bi bi-calculator me-1"></i> Liquidación de Honorarios Médicos
+                        <i class="bi bi-calculator me-1"></i> Honorarios Médicos
                     </h4>
                     <p class="small text-muted mb-0">
-                        Cálculo automático de honorarios según modelo 50% ADH / 50% Médico y compensación de beneficios.
+                        Cálculo automático de honorarios médicos según el porcentaje.
                     </p>
                 </div>
                 <div class="col-xl-3 col-lg-3 col-md-6 d-flex align-items-center gap-2">
