@@ -150,5 +150,13 @@ El análisis de las fórmulas de las columnas `AE` a `AL` del Excel original rev
 ## 9. Modularización de la Base de Datos para Despliegues en Hosting / Servidores
 Para facilitar la instalación y migración del sistema en cualquier servidor o hosting:
 1. **`database/schema.sql` (Esquema DDL y Catálogos Maestros):** Crea la base de datos `cmco_citas_db`, sus 7 tablas relacionales, índices y las semillas iniciales imprescindibles (3 consultorios, 12 médicos especialistas y usuario administrador).
-2. **`database/pacientes.sql` (Catálogo Completo de Pacientes):** Archivo SQL independiente que contiene las 620 inserciones de pacientes extraídas de la hoja `Base de Datos` del libro Excel oficial, con teléfonos normalizados, cédulas, tipos de beneficio y codificación `utf8mb4` nativa.
+2. **`database/pacientes.sql` (Catálogo Completo de Pacientes):** Archivo SQL independiente que contiene las 620 inserciones de pacientes con ID explícito y cláusula `ON DUPLICATE KEY UPDATE` para garantizar idempotencia total y preservar la integridad referencial de las citas.
 3. **`database/import_pacientes.php` (Script PHP de Carga Segura):** Automatiza la inyección de `pacientes.sql` a través de PDO para evitar que consolas ANSI en Windows corrompan los acentos.
+
+---
+
+## 10. Directorio de Pacientes, Paginación y Búsqueda Reactiva
+* **Paginación Dinámica:** Para optimizar la velocidad y el rendimiento del navegador frente a catálogos de cientos o miles de pacientes, el backend (`api/pacientes.php`) utiliza paginación por defecto a 50 registros por página, configurable por el usuario a 25, 50, 100 o "Ver Todos" (`limit=all`).
+* **Controles de UI y Resumen:** El directorio cuenta con botones de navegación con elipsis dinámica (`« 1 2 3 ... 13 »`), selector de límite por página, badge indicador con el total de pacientes registrados y leyenda contextual (`Mostrando X - Y de Z pacientes`).
+* **Búsqueda Multicriterio Desacoplada:** Permite filtrar instantáneamente por nombre, cédula o representante sin romper la estructura de paginación ni provocar fallos de ejecución en colecciones JavaScript.
+* **Autocompletado en Citas:** Adaptado para soportar respuestas paginadas u objetos estructurados del endpoint `api/pacientes.php?q=...` sin generar errores de tipo en la agenda.

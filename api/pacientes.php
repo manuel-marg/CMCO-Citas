@@ -31,39 +31,59 @@ if ($method === 'GET') {
         }
     }
 
-    if ($search !== '') {
-        $stmt = $pdo->prepare("
-            SELECT id, nombre, cedula, telefono, representante, tipo_beneficio
-            FROM pacientes
-            WHERE nombre LIKE :q1 OR cedula LIKE :q2
-            ORDER BY nombre ASC
-            LIMIT 20
-        ");
-        $term = "%{$search}%";
-        $stmt->execute([':q1' => $term, ':q2' => $term]);
-        $pacientes = $stmt->fetchAll();
-        sendJsonResponse(true, $pacientes);
-    }
-
-    // Listado paginado de pacientes
+    // Listado paginado y búsqueda integrada
     $page = max(1, (int)($_GET['page'] ?? 1));
-    $limit = 50;
+    $limitParam = strtolower(trim((string)($_GET['limit'] ?? '50')));
+    $esTodos = in_array($limitParam, ['all', 'todos', '0', '-1'], true);
+    $limit = $esTodos ? 5000 : max(10, min(500, (int)$limitParam ?: 50));
     $offset = ($page - 1) * $limit;
 
-    $stmtCount = $pdo->query("SELECT COUNT(*) FROM pacientes");
-    $total = (int)$stmtCount->fetchColumn();
+    $where = "";
+    $params = [];
+    if ($search !== '') {
+        $where = "WHERE nombre LIKE :q1 OR cedula LIKE :q2 OR representante LIKE :q3";
+        $term = "%{$search}%";
+        $params[':q1'] = $term;
+        $params[':q2'] = $term;
+        $params[':q3'] = $term;
+    }
 
-    $stmt = $pdo->prepare("SELECT * FROM pacientes ORDER BY nombre ASC LIMIT :limit OFFSET :offset");
-    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    // Contar total general y total con filtros
+    $totalGeneral = (int)$pdo->query("SELECT COUNT(*) FROM pacientes")->fetchColumn();
+
+    if ($where !== '') {
+        $countStmt = $pdo->prepare("SELECT COUNT(*) FROM pacientes $where");
+        $countStmt->execute($params);
+        $totalFiltrados = (int)$countStmt->fetchColumn();
+    } else {
+        $totalFiltrados = $totalGeneral;
+    }
+
+    $sql = "SELECT id, nombre, cedula, telefono, representante, tipo_beneficio, observaciones FROM pacientes $where ORDER BY nombre ASC";
+    if (!$esTodos) {
+        $sql .= " LIMIT :limit OFFSET :offset";
+    }
+
+    $stmt = $pdo->prepare($sql);
+    foreach ($params as $k => $v) {
+        $stmt->bindValue($k, $v);
+    }
+    if (!$esTodos) {
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    }
     $stmt->execute();
     $pacientes = $stmt->fetchAll();
 
+    $totalPages = $esTodos ? 1 : max(1, (int)ceil($totalFiltrados / $limit));
+
     sendJsonResponse(true, [
-        'pacientes' => $pacientes,
-        'total'     => $total,
-        'page'      => $page,
-        'pages'     => ceil($total / $limit)
+        'pacientes'       => $pacientes,
+        'total'           => $totalGeneral,
+        'total_filtrados' => $totalFiltrados,
+        'page'            => $page,
+        'pages'           => $totalPages,
+        'limit'           => $esTodos ? 'all' : $limit
     ]);
 }
 

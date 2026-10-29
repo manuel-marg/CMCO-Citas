@@ -516,6 +516,23 @@ body {
     background-color: #e9ecef;
 }
 
+/* Paginación con estilo institucional CMCO */
+.pagination .page-item.active .page-link {
+    background-color: var(--cmco-primary) !important;
+    border-color: var(--cmco-primary) !important;
+    color: #ffffff !important;
+}
+
+.pagination .page-link {
+    color: var(--cmco-primary);
+    box-shadow: none !important;
+}
+
+.pagination .page-link:hover {
+    color: var(--cmco-secondary);
+    background-color: #eef5f8;
+}
+
 /* Estilos de Impresión y Exportación a PDF */
 @media print {
     @page {

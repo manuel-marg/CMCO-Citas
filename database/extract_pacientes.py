@@ -133,14 +133,16 @@ def main():
         "USE `cmco_citas_db`;",
         "SET FOREIGN_KEY_CHECKS = 0;",
         "",
-        "-- Inserción de pacientes",
+        "-- Inserción o actualización idempotente de pacientes (con ID fijo para preservar integridad referencial de citas)",
     ]
 
-    for p in pacientes_lista:
+    for idx, p in enumerate(pacientes_lista, 1):
         line = (
-            f"INSERT INTO `pacientes` (`nombre`, `cedula`, `telefono`, `representante`, `tipo_beneficio`, `observaciones`) "
-            f"VALUES ({escape_sql(p['nombre'])}, {escape_sql(p['cedula'])}, {escape_sql(p['telefono'])}, "
-            f"{escape_sql(p['representante'])}, {escape_sql(p['tipo_beneficio'])}, {escape_sql(p['observaciones'])});"
+            f"INSERT INTO `pacientes` (`id`, `nombre`, `cedula`, `telefono`, `representante`, `tipo_beneficio`, `observaciones`) "
+            f"VALUES ({idx}, {escape_sql(p['nombre'])}, {escape_sql(p['cedula'])}, {escape_sql(p['telefono'])}, "
+            f"{escape_sql(p['representante'])}, {escape_sql(p['tipo_beneficio'])}, {escape_sql(p['observaciones'])}) "
+            f"ON DUPLICATE KEY UPDATE `nombre` = VALUES(`nombre`), `cedula` = VALUES(`cedula`), `telefono` = VALUES(`telefono`), "
+            f"`representante` = VALUES(`representante`), `tipo_beneficio` = VALUES(`tipo_beneficio`), `observaciones` = VALUES(`observaciones`);"
         )
         sql_lines.append(line)
 

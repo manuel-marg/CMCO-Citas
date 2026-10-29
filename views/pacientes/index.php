@@ -6,8 +6,9 @@
         <div class="agenda-bar mb-3">
             <div class="row g-3 align-items-center">
                 <div class="col-md-5">
-                    <h4 class="fw-bold mb-1 text-primary">
-                        <i class="bi bi-people me-1"></i> Directorio de Pacientes
+                    <h4 class="fw-bold mb-1 text-primary d-flex align-items-center gap-2">
+                        <i class="bi bi-people"></i> Directorio de Pacientes
+                        <span class="badge bg-primary fs-6 fw-normal" id="badge_total_pacientes">Cargando...</span>
                     </h4>
                     <p class="small text-muted mb-0">
                         Base de datos central con historial de citas y tipos de beneficio.
@@ -17,7 +18,7 @@
                     <div class="input-group">
                         <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                         <input type="text" class="form-control" id="directorio_search_input" 
-                               placeholder="Buscar por nombre o cédula..." oninput="buscarPacientesDirectorio(this.value)">
+                               placeholder="Buscar por nombre, cédula o representante..." oninput="buscarPacientesDirectorio(this.value)">
                     </div>
                 </div>
                 <div class="col-md-3 text-md-end">
@@ -50,6 +51,28 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+            <!-- Controles de Paginación y Selector de Límite -->
+            <div class="card-footer bg-white py-3 border-top d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span class="small text-muted" id="pacientes_info_registros">
+                        Mostrando 0 a 0 de 0 pacientes
+                    </span>
+                    <div class="d-flex align-items-center gap-2 small">
+                        <span class="text-muted fw-semibold">Mostrar:</span>
+                        <select class="form-select form-select-sm w-auto shadow-none" id="pacientes_select_limit" onchange="cambiarLimitePacientes(this.value)">
+                            <option value="25">25 por pág.</option>
+                            <option value="50" selected>50 por pág.</option>
+                            <option value="100">100 por pág.</option>
+                            <option value="all">Ver Todos</option>
+                        </select>
+                    </div>
+                </div>
+                <nav aria-label="Navegación de páginas de pacientes">
+                    <ul class="pagination pagination-sm mb-0 justify-content-center" id="pacientes_pagination_ul">
+                        <!-- Botones de página inyectados por JavaScript -->
+                    </ul>
+                </nav>
             </div>
         </div>
 

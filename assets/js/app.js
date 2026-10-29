@@ -23,7 +23,14 @@ const AppState = {
     citasActuales: [],
     citasMap: {},
     citasPorDia: {},
-    citaSeleccionada: null
+    citaSeleccionada: null,
+    // Estado de paginación y búsqueda para Directorio de Pacientes
+    pacientesPage: 1,
+    pacientesLimit: 50,
+    pacientesSearch: '',
+    pacientesTotal: 0,
+    pacientesTotalFiltrados: 0,
+    pacientesTotalPages: 1
 };
 
 /**
@@ -805,11 +812,12 @@ function configurarAutocompletePacientes() {
 
         debounceTimer = setTimeout(async () => {
             try {
-                const res = await fetch(`api/pacientes.php?q=${encodeURIComponent(q)}`);
+                const res = await fetch(`api/pacientes.php?q=${encodeURIComponent(q)}&limit=15`);
                 const json = await res.json();
-                if (json.success && json.data.length > 0) {
+                const pacientesList = Array.isArray(json.data) ? json.data : (json.data?.pacientes || []);
+                if (json.success && pacientesList.length > 0) {
                     list.innerHTML = '';
-                    json.data.forEach(p => {
+                    pacientesList.forEach(p => {
                         const div = document.createElement('div');
                         div.className = 'autocomplete-item';
                         div.innerHTML = `<strong>${p.nombre}</strong> <span class="text-muted">(${p.cedula || 'Sin cédula'} · Tel: ${p.telefono || 'N/A'})</span> <span class="badge bg-light text-dark float-end">${p.tipo_beneficio}</span>`;
@@ -1350,35 +1358,82 @@ let debounceBuscarDirectorio;
 function buscarPacientesDirectorio(q) {
     clearTimeout(debounceBuscarDirectorio);
     debounceBuscarDirectorio = setTimeout(() => {
-        cargarDirectorioPacientes(q);
+        AppState.pacientesSearch = (q || '').trim();
+        AppState.pacientesPage = 1;
+        cargarDirectorioPacientes();
     }, 300);
 }
 
-async function cargarDirectorioPacientes(busqueda = '') {
+function cambiarPaginaPacientes(numPagina) {
+    if (numPagina < 1 || (AppState.pacientesTotalPages && numPagina > AppState.pacientesTotalPages)) return;
+    AppState.pacientesPage = numPagina;
+    cargarDirectorioPacientes();
+}
+
+function cambiarLimitePacientes(nuevoLimite) {
+    AppState.pacientesLimit = nuevoLimite;
+    AppState.pacientesPage = 1;
+    cargarDirectorioPacientes();
+}
+
+async function cargarDirectorioPacientes() {
     const tbody = document.getElementById('tbody_pacientes_directorio');
-    tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-muted">Cargando directorio...</td></tr>';
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-muted"><div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Cargando pacientes...</td></tr>';
 
     try {
-        const url = busqueda.trim() !== '' ? `api/pacientes.php?q=${encodeURIComponent(busqueda)}` : `api/pacientes.php?page=1`;
-        const res = await fetch(url);
+        const busqueda = AppState.pacientesSearch || '';
+        const page = AppState.pacientesPage || 1;
+        const limit = AppState.pacientesLimit || 50;
+
+        const params = new URLSearchParams();
+        if (busqueda !== '') params.append('q', busqueda);
+        params.append('page', page);
+        params.append('limit', limit);
+
+        const res = await fetch(`api/pacientes.php?${params.toString()}`);
         const json = await res.json();
 
-        if (json.success) {
-            const list = busqueda.trim() !== '' ? json.data : json.data.pacientes;
+        if (json.success && json.data) {
+            const list = Array.isArray(json.data) ? json.data : (json.data.pacientes || []);
+            const total = json.data.total ?? list.length;
+            const totalFiltrados = json.data.total_filtrados ?? list.length;
+            const currentPage = json.data.page ?? page;
+            const totalPages = json.data.pages ?? 1;
+
+            AppState.pacientesTotal = total;
+            AppState.pacientesTotalFiltrados = totalFiltrados;
+            AppState.pacientesPage = currentPage;
+            AppState.pacientesTotalPages = totalPages;
+
+            // Actualizar badge del encabezado
+            const badgeTotal = document.getElementById('badge_total_pacientes');
+            if (badgeTotal) {
+                badgeTotal.innerText = `${total} Registrados`;
+            }
+
+            // Renderizar paginación e información
+            renderPaginacionPacientes(total, totalFiltrados, currentPage, totalPages, limit);
+
             if (list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-muted">No se encontraron pacientes.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="py-4 text-center text-muted">No se encontraron pacientes coincidentes.</td></tr>';
                 return;
             }
 
             let html = '';
             list.forEach(p => {
+                const tipoBadgeClass = p.tipo_beneficio === 'Empleado' ? 'bg-info text-dark' :
+                                       p.tipo_beneficio === 'Participante' ? 'bg-success text-white' :
+                                       p.tipo_beneficio === 'Familiar' ? 'bg-warning text-dark' : 'bg-light text-dark border';
                 html += `
                     <tr>
-                        <td class="ps-3 fw-bold text-primary">${p.nombre}</td>
-                        <td>${p.cedula || '<span class="text-muted">S/C</span>'}</td>
-                        <td>${p.telefono || '<span class="text-muted">-</span>'}</td>
+                        <td class="ps-3 fw-bold text-primary">
+                            <i class="bi bi-person-fill text-secondary me-1"></i>${p.nombre}
+                        </td>
+                        <td>${p.cedula ? `<span class="badge bg-light text-dark border">${p.cedula}</span>` : '<span class="text-muted">S/C</span>'}</td>
+                        <td>${p.telefono ? `<i class="bi bi-telephone text-muted me-1"></i>${p.telefono}` : '<span class="text-muted">-</span>'}</td>
                         <td class="small">${p.representante || '<span class="text-muted">-</span>'}</td>
-                        <td><span class="badge bg-light text-dark border">${p.tipo_beneficio || 'Particular'}</span></td>
+                        <td><span class="badge ${tipoBadgeClass}">${p.tipo_beneficio || 'Particular'}</span></td>
                         <td class="text-center">
                             <button class="btn btn-sm btn-outline-primary py-0" onclick="verHistorialPaciente(${p.id})">
                                 <i class="bi bi-clock-history"></i> Historial
@@ -1388,10 +1443,105 @@ async function cargarDirectorioPacientes(busqueda = '') {
                 `;
             });
             tbody.innerHTML = html;
+        } else {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-4 text-center">${json.message || 'Error al obtener pacientes'}</td></tr>`;
         }
     } catch (e) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-danger py-4 text-center">Error: ${e.message}</td></tr>`;
     }
+}
+
+function renderPaginacionPacientes(totalGeneral, totalFiltrados, page, pages, limit) {
+    const infoEl = document.getElementById('pacientes_info_registros');
+    const ulEl = document.getElementById('pacientes_pagination_ul');
+    if (!infoEl || !ulEl) return;
+
+    // Calcular rango visible
+    const esTodos = limit === 'all' || limit === 'todos';
+    let desde = 0;
+    let hasta = 0;
+    if (totalFiltrados > 0) {
+        if (esTodos) {
+            desde = 1;
+            hasta = totalFiltrados;
+        } else {
+            const limNum = parseInt(limit, 10) || 50;
+            desde = (page - 1) * limNum + 1;
+            hasta = Math.min(page * limNum, totalFiltrados);
+        }
+    }
+
+    if (AppState.pacientesSearch) {
+        infoEl.innerHTML = `Mostrando <strong>${desde}</strong> - <strong>${hasta}</strong> de <strong>${totalFiltrados}</strong> filtrados (de <strong>${totalGeneral}</strong> en total)`;
+    } else {
+        infoEl.innerHTML = `Mostrando <strong>${desde}</strong> - <strong>${hasta}</strong> de <strong>${totalGeneral}</strong> pacientes`;
+    }
+
+    if (esTodos || pages <= 1) {
+        ulEl.innerHTML = '';
+        return;
+    }
+
+    let pagHtml = '';
+
+    // Botón Anterior
+    pagHtml += `
+        <li class="page-item ${page <= 1 ? 'disabled' : ''}">
+            <button class="page-link" onclick="cambiarPaginaPacientes(${page - 1})" aria-label="Anterior">
+                &laquo;
+            </button>
+        </li>
+    `;
+
+    // Ventana inteligente de números de página
+    const delta = 2; // Cantidad de páginas adyacentes a mostrar
+    const rango = [];
+    for (let i = Math.max(2, page - delta); i <= Math.min(pages - 1, page + delta); i++) {
+        rango.push(i);
+    }
+
+    // Siempre página 1
+    pagHtml += `
+        <li class="page-item ${page === 1 ? 'active' : ''}">
+            <button class="page-link" onclick="cambiarPaginaPacientes(1)">1</button>
+        </li>
+    `;
+
+    if (rango.length > 0 && rango[0] > 2) {
+        pagHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+
+    rango.forEach(pNum => {
+        pagHtml += `
+            <li class="page-item ${page === pNum ? 'active' : ''}">
+                <button class="page-link" onclick="cambiarPaginaPacientes(${pNum})">${pNum}</button>
+            </li>
+        `;
+    });
+
+    if (rango.length > 0 && rango[rango.length - 1] < pages - 1) {
+        pagHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+
+    // Siempre última página si pages > 1
+    if (pages > 1) {
+        pagHtml += `
+            <li class="page-item ${page === pages ? 'active' : ''}">
+                <button class="page-link" onclick="cambiarPaginaPacientes(${pages})">${pages}</button>
+            </li>
+        `;
+    }
+
+    // Botón Siguiente
+    pagHtml += `
+        <li class="page-item ${page >= pages ? 'disabled' : ''}">
+            <button class="page-link" onclick="cambiarPaginaPacientes(${page + 1})" aria-label="Siguiente">
+                &raquo;
+            </button>
+        </li>
+    `;
+
+    ulEl.innerHTML = pagHtml;
 }
 
 async function verHistorialPaciente(pacienteId) {
