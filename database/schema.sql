@@ -116,7 +116,7 @@ INSERT INTO `medicos` (`nombre`, `especialidad`, `porcentaje_honorario`) VALUES
 ('Dra. Evelyn Tranchino', 'Medicina General', 50.00),
 ('Dra. Gabriela Berbis', 'Pediatría', 50.00),
 ('Dra. Gerlly Mendoza', 'Medicina General', 50.00),
-('Dra. Ma.Auxliliadora Aguilera', 'Especialista', 50.00),
+('Dra. Ma.Auxiliadora Aguilera', 'Especialista', 50.00),
 ('Dra. Maribel Guilarte', 'Medicina General', 50.00),
 ('Dra. Mónica Porras', 'Medicina General', 50.00),
 ('Dra. Rosanny García', 'Medicina General', 50.00),

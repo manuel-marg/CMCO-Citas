@@ -37,11 +37,16 @@ Sistema de Control de Citas Médicas, Facturación, Control de Beneficios y Liqu
 
 2. **Crear e Importar la Base de Datos:**
    - Inicia Apache y MySQL desde el Panel de Control de XAMPP.
-   - Entra en phpMyAdmin (`http://localhost/phpmyadmin`) o desde la consola MySQL:
+   - En phpMyAdmin o mediante el cliente MySQL, ejecutar en el siguiente orden:
      ```bash
-     C:\xampp\mysql\bin\mysql.exe -u root -e "CREATE DATABASE IF NOT EXISTS cmco_citas_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-     C:\xampp\mysql\bin\mysql.exe -u root cmco_citas_db < database/schema.sql
-     C:\xampp\mysql\bin\mysql.exe -u root cmco_citas_db < database/imported_data.sql
+     # 1° Crear e inicializar el esquema base (tablas, consultorios, médicos y admin)
+     C:\xampp\mysql\bin\mysql.exe -u root --default-character-set=utf8mb4 < database/schema.sql
+
+     # 2° Cargar el catálogo completo de pacientes (extraído de la hoja 'Base de Datos' del Excel)
+     C:\xampp\mysql\bin\mysql.exe -u root --default-character-set=utf8mb4 cmco_citas_db < database/pacientes.sql
+
+     # (Alternativa recomendada para evitar problemas de codificación en Windows):
+     C:\xampp\php\php.exe database/import_pacientes.php
      ```
 
 3. **Acceder a la Aplicación:**

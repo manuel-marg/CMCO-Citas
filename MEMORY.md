@@ -144,3 +144,11 @@ El análisis de las fórmulas de las columnas `AE` a `AL` del Excel original rev
 * **Acceso Dual:**
   1. **Botón "Imprimir / Exportar PDF":** Abre directamente `api/liquidacion_pdf.php?mes=YYYY-MM` en una pestaña nueva con el archivo `.pdf` listo para descargar o imprimir con el visor nativo.
   2. **Impresión Web (@media print):** Reglas CSS con `@page { size: landscape; margin: 1cm; }` que ocultan navbar, footer y selectores, mostrando un membrete limpio con el mes seleccionado.
+
+---
+
+## 9. Modularización de la Base de Datos para Despliegues en Hosting / Servidores
+Para facilitar la instalación y migración del sistema en cualquier servidor o hosting:
+1. **`database/schema.sql` (Esquema DDL y Catálogos Maestros):** Crea la base de datos `cmco_citas_db`, sus 7 tablas relacionales, índices y las semillas iniciales imprescindibles (3 consultorios, 12 médicos especialistas y usuario administrador).
+2. **`database/pacientes.sql` (Catálogo Completo de Pacientes):** Archivo SQL independiente que contiene las 620 inserciones de pacientes extraídas de la hoja `Base de Datos` del libro Excel oficial, con teléfonos normalizados, cédulas, tipos de beneficio y codificación `utf8mb4` nativa.
+3. **`database/import_pacientes.php` (Script PHP de Carga Segura):** Automatiza la inyección de `pacientes.sql` a través de PDO para evitar que consolas ANSI en Windows corrompan los acentos.
