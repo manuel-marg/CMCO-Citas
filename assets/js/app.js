@@ -747,7 +747,7 @@ async function cargarTasaBcv() {
             AppState.tasaBcv = parseFloat(json.data.tasa_usd_ves);
             AppState.fechaValorBcv = json.data.fecha_valor;
             const rateEl = document.getElementById('nav-bcv-rate');
-            if (rateEl) rateEl.innerText = `Bs. ${formatearNumero(AppState.tasaBcv, 2)}`;
+            if (rateEl) rateEl.innerText = formatearNumero(AppState.tasaBcv, 2);
         }
     } catch (e) {
         console.error('Error cargando tasa BCV:', e);
@@ -778,7 +778,7 @@ async function guardarTasaBcv(e) {
             AppState.tasaBcv = tasa;
             AppState.fechaValorBcv = fecha_valor;
             const navRate = document.getElementById('nav-bcv-rate');
-            if (navRate) navRate.innerText = `Bs. ${formatearNumero(tasa, 2)}`;
+            if (navRate) navRate.innerText = formatearNumero(tasa, 2);
             bootstrap.Modal.getInstance(document.getElementById('modalBcv')).hide();
             mostrarToast('Tasa BCV actualizada exitosamente');
             if (AppState.citaSeleccionada) recalcularConversionCobro();

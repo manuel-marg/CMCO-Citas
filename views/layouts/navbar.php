@@ -43,7 +43,7 @@
             <!-- Pastilla Tasa BCV Oficial (Solo lectura directa de bcv.org.ve) -->
             <div class="d-flex align-items-center gap-2">
                 <div class="bcv-pill d-flex align-items-center gap-2" title="Tasa Oficial del Banco Central de Venezuela (bcv.org.ve)">
-                    <i class="bi bi-currency-exchange text-warning"></i>
+                    <i class="bi bi-currency-exchange text-white"></i>
                     <span>$ USD: <strong id="nav-bcv-rate">Cargando...</strong></span>
                 </div>
             </div>
