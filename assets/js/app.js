@@ -168,6 +168,8 @@ function showSection(sectionId) {
     if (sectionId === 'beneficios') cargarBeneficios();
     if (sectionId === 'pacientes') cargarDirectorioPacientes();
     if (sectionId === 'medicos') cargarCatalogoMedicos();
+
+    inicializarTooltips();
 }
 
 /**
@@ -1329,6 +1331,14 @@ function cerrarDetalleMedico() {
  * CONTROL DE BENEFICIOS (Columnas BA - BN)
  * -------------------------------------------------------------
  */
+/**
+ * Genera y abre el archivo PDF oficial de control de beneficios en orientación horizontal
+ */
+function exportarBeneficiosPDF() {
+    const mes = document.getElementById('ben_mes_selector').value || AppState.mesActual;
+    window.open(`api/beneficios_pdf.php?mes=${mes}`, '_blank');
+}
+
 async function cargarBeneficios() {
     const mes = document.getElementById('ben_mes_selector').value;
 

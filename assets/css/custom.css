@@ -716,9 +716,10 @@ body {
 }
 
 /* =================================================== */
-/* 8. TABLA DE HONORARIOS MÉDICOS (ENCABEZADOS)        */
+/* 8. TABLA DE HONORARIOS Y BENEFICIOS (ENCABEZADOS)   */
 /* =================================================== */
 #tabla_liquidacion thead th,
-#section-liquidacion table thead th {
+#section-liquidacion table thead th,
+#section-beneficios table thead th {
     vertical-align: middle !important;
 }

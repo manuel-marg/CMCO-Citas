@@ -5,7 +5,7 @@
         <!-- Barra de Control -->
         <div class="agenda-bar mb-3">
             <div class="row g-3 align-items-center">
-                <div class="col-md-6">
+                <div class="col-xl-5 col-lg-5 col-md-12">
                     <h4 class="fw-bold mb-1 text-primary">
                         <i class="bi bi-gift me-1"></i> Control de Beneficios Especiales
                     </h4>
@@ -13,13 +13,16 @@
                         Auditoría mensual de consultas de Empleados, Familiares directos y Participantes ADH.
                     </p>
                 </div>
-                <div class="col-md-3 d-flex align-items-center gap-2">
+                <div class="col-xl-4 col-lg-4 col-md-6 d-flex align-items-center gap-2">
                     <label class="form-label mb-0 fw-bold small text-muted">Mes:</label>
                     <input type="month" class="form-control fw-bold border-primary" id="ben_mes_selector" onchange="cargarBeneficios()">
+                    <button class="btn btn-primary" onclick="cargarBeneficios()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Recargar beneficios">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </button>
                 </div>
-                <div class="col-md-3 text-md-end no-print">
-                    <button class="btn btn-outline-dark fw-bold" onclick="window.print()">
-                        <i class="bi bi-printer me-1"></i> Imprimir Reporte
+                <div class="col-xl-3 col-lg-3 col-md-6 text-md-end no-print d-flex align-items-center justify-content-md-end gap-2">
+                    <button class="btn btn-primary fw-bold shadow-sm" onclick="exportarBeneficiosPDF()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Exportar a PDF">
+                        <i class="bi bi-file-earmark-pdf-fill"></i>
                     </button>
                 </div>
             </div>
@@ -56,15 +59,15 @@
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover table-striped mb-0 text-center align-middle">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th class="text-start ps-3">Nombre del Empleado (Paciente)</th>
-                                        <th>Cédula</th>
-                                        <th>Teléfono</th>
-                                        <th>Médico Tratante</th>
-                                        <th>Monto ($)</th>
-                                        <th>Estado</th>
+                                <thead class="table-dark align-middle">
+                                    <tr class="align-middle">
+                                        <th class="align-middle">Fecha</th>
+                                        <th class="text-start ps-3 align-middle">Nombre del Empleado (Paciente)</th>
+                                        <th class="align-middle">Cédula</th>
+                                        <th class="align-middle">Teléfono</th>
+                                        <th class="align-middle">Médico Tratante</th>
+                                        <th class="align-middle">Monto</th>
+                                        <th class="align-middle">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody_beneficio_empleados">
@@ -82,16 +85,16 @@
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover table-striped mb-0 text-center align-middle">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th class="text-start ps-3">Paciente Familiar</th>
-                                        <th>Personal ADH / Representante</th>
-                                        <th>Cédula</th>
-                                        <th>Teléfono</th>
-                                        <th>Médico Tratante</th>
-                                        <th>Monto ($)</th>
-                                        <th>Estado</th>
+                                <thead class="table-dark align-middle">
+                                    <tr class="align-middle">
+                                        <th class="align-middle">Fecha</th>
+                                        <th class="text-start ps-3 align-middle">Paciente Familiar</th>
+                                        <th class="align-middle">Personal ADH / Representante</th>
+                                        <th class="align-middle">Cédula</th>
+                                        <th class="align-middle">Teléfono</th>
+                                        <th class="align-middle">Médico Tratante</th>
+                                        <th class="align-middle">Monto</th>
+                                        <th class="align-middle">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody_beneficio_familiares">
@@ -109,15 +112,15 @@
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover table-striped mb-0 text-center align-middle">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th class="text-start ps-3">Participante ADH</th>
-                                        <th>Cédula</th>
-                                        <th>Teléfono</th>
-                                        <th>Médico Tratante</th>
-                                        <th>Monto ($)</th>
-                                        <th>Estado</th>
+                                <thead class="table-dark align-middle">
+                                    <tr class="align-middle">
+                                        <th class="align-middle">Fecha</th>
+                                        <th class="text-start ps-3 align-middle">Participante ADH</th>
+                                        <th class="align-middle">Cédula</th>
+                                        <th class="align-middle">Teléfono</th>
+                                        <th class="align-middle">Médico Tratante</th>
+                                        <th class="align-middle">Monto</th>
+                                        <th class="align-middle">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody_beneficio_participantes">
@@ -135,15 +138,15 @@
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover table-striped mb-0 text-center align-middle">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Fecha</th>
-                                        <th class="text-start ps-3">Paciente</th>
-                                        <th>Tipo Exoneración</th>
-                                        <th>Cédula</th>
-                                        <th>Médico Tratante</th>
-                                        <th>Monto ($)</th>
-                                        <th>Estado</th>
+                                <thead class="table-dark align-middle">
+                                    <tr class="align-middle">
+                                        <th class="align-middle">Fecha</th>
+                                        <th class="text-start ps-3 align-middle">Paciente</th>
+                                        <th class="align-middle">Tipo Exoneración</th>
+                                        <th class="align-middle">Cédula</th>
+                                        <th class="align-middle">Médico Tratante</th>
+                                        <th class="align-middle">Monto</th>
+                                        <th class="align-middle">Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody_beneficio_exonerados">
