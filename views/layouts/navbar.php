@@ -5,9 +5,9 @@
             <div class="navbar-logo-box">
                 <img src="assets/img/logo.png" alt="CMCO Logo" class="navbar-logo-img">
             </div>
-            <div>
-                <div class="brand-text lh-1"><?= APP_NAME ?></div>
-                <small class="text-white-50" style="font-size: 0.72rem;"><?= APP_ORG ?></small>
+            <div class="d-flex flex-column justify-content-center">
+                <span class="brand-text"><?= APP_NAME ?></span>
+                <small class="brand-subtitle text-white-50"><?= APP_ORG ?></small>
             </div>
         </a>
 

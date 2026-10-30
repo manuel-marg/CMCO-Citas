@@ -159,10 +159,10 @@ class LiquidacionDocumentoPDF extends FPDF {
         $this->Cell(40.0, 8, pdfTxt('  Especialidad'), 1, 0, 'L', true);
         $this->Cell(22.0, 8, pdfTxt('Total Citas'), 1, 0, 'C', true);
         $this->Cell(24.0, 8, pdfTxt('Citas Pagadas'), 1, 0, 'C', true);
-        $this->Cell(28.5, 8, pdfTxt('Total Bruto ($)  '), 1, 0, 'R', true);
-        $this->Cell(28.5, 8, pdfTxt('Cobrado ($)  '), 1, 0, 'R', true);
-        $this->Cell(28.5, 8, pdfTxt('Monto ADH ($)  '), 1, 0, 'R', true);
-        $this->Cell(28.5, 8, pdfTxt('Monto Médico ($)  '), 1, 1, 'R', true);
+        $this->Cell(28.5, 8, pdfTxt('Total Bruto  '), 1, 0, 'R', true);
+        $this->Cell(28.5, 8, pdfTxt('Cobrado  '), 1, 0, 'R', true);
+        $this->Cell(28.5, 8, pdfTxt('Monto ADH  '), 1, 0, 'R', true);
+        $this->Cell(28.5, 8, pdfTxt('Monto Médico  '), 1, 1, 'R', true);
     }
 
     // Pie de Página

@@ -4,7 +4,7 @@
  */
 date_default_timezone_set('America/Caracas');
 
-define('APP_NAME', 'CMCO - Control de Citas');
+define('APP_NAME', 'Control de Citas');
 define('APP_ORG', 'Centro Médico Comunitario OscaryAnny');
 define('BASE_URL', '/CMCO-Citas');
 

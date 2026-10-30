@@ -52,17 +52,17 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover table-striped align-middle mb-0 text-center" id="tabla_liquidacion">
-                        <thead class="table-dark">
-                            <tr>
-                                <th class="text-start ps-3">Médico / Especialista</th>
-                                <th>Especialidad</th>
-                                <th>Cantidad Citas</th>
-                                <th>Citas Pagadas</th>
-                                <th>Total Bruto ($)</th>
-                                <th>Monto Cobrado ($)</th>
-                                <th class="bg-primary text-white">Monto ADH ($)</th>
-                                <th class="bg-success text-white">Monto Médico ($)</th>
-                                <th class="no-print">Acción</th>
+                        <thead class="table-dark align-middle">
+                            <tr class="align-middle">
+                                <th class="text-start ps-3 align-middle">Médico / Especialista</th>
+                                <th class="align-middle">Especialidad</th>
+                                <th class="align-middle">Cantidad Citas</th>
+                                <th class="align-middle">Citas Pagadas</th>
+                                <th class="align-middle">Total Bruto</th>
+                                <th class="align-middle">Monto Cobrado</th>
+                                <th class="bg-primary text-white align-middle">Monto ADH</th>
+                                <th class="bg-success text-white align-middle">Monto Médico</th>
+                                <th class="no-print align-middle">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="tbody_liquidacion">
@@ -92,17 +92,17 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered align-middle mb-0 text-center">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Consultorio</th>
-                                <th>Paciente</th>
-                                <th>Cédula</th>
-                                <th>Tipo de Cita</th>
-                                <th>Estado</th>
-                                <th>Precio ($)</th>
-                                <th>Factura / Beneficio</th>
+                        <thead class="table-light align-middle">
+                            <tr class="align-middle">
+                                <th class="align-middle">Fecha</th>
+                                <th class="align-middle">Hora</th>
+                                <th class="align-middle">Consultorio</th>
+                                <th class="align-middle">Paciente</th>
+                                <th class="align-middle">Cédula</th>
+                                <th class="align-middle">Tipo de Cita</th>
+                                <th class="align-middle">Estado</th>
+                                <th class="align-middle">Precio ($)</th>
+                                <th class="align-middle">Factura / Beneficio</th>
                             </tr>
                         </thead>
                         <tbody id="tbody_detalle_citas">
