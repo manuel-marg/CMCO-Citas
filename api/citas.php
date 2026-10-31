@@ -255,15 +255,28 @@ if ($method === 'POST') {
 
     if ($action === 'editar') {
         $cita_id = (int)($input['cita_id'] ?? 0);
-        $medico_id = (int)($input['medico_id'] ?? 1);
-        $tipo = trim($input['tipo'] ?? 'Particular');
-        $precio_usd = (float)($input['precio_usd'] ?? 50.00);
-        $observaciones = trim($input['observaciones'] ?? '') ?: null;
-        $motivo = trim($input['motivo_consulta'] ?? '') ?: null;
+        if ($cita_id <= 0) {
+            sendJsonResponse(false, null, 'ID de cita inválido', 400);
+        }
+
+        // Obtener cita actual para preservar campos no enviados
+        $stmtCur = $pdo->prepare("SELECT * FROM citas WHERE id = :id LIMIT 1");
+        $stmtCur->execute([':id' => $cita_id]);
+        $citaActual = $stmtCur->fetch();
+        if (!$citaActual) {
+            sendJsonResponse(false, null, 'Cita no encontrada', 404);
+        }
+
+        $medico_id = isset($input['medico_id']) ? (int)$input['medico_id'] : (int)$citaActual['medico_id'];
+        $tipo = isset($input['tipo']) ? trim($input['tipo']) : $citaActual['tipo'];
+        $precio_usd = isset($input['precio_usd']) ? max(0.0, (float)$input['precio_usd']) : (float)$citaActual['precio_usd'];
+        $estado = isset($input['estado']) && array_key_exists($input['estado'], ESTADOS_CITAS) ? trim($input['estado']) : $citaActual['estado'];
+        $observaciones = array_key_exists('observaciones', $input) ? (trim($input['observaciones'] ?? '') ?: null) : $citaActual['observaciones'];
+        $motivo = array_key_exists('motivo_consulta', $input) ? (trim($input['motivo_consulta'] ?? '') ?: null) : $citaActual['motivo_consulta'];
 
         $stmt = $pdo->prepare("
             UPDATE citas
-            SET medico_id = :med_id, tipo = :tipo, precio_usd = :precio,
+            SET medico_id = :med_id, tipo = :tipo, precio_usd = :precio, estado = :estado,
                 observaciones = :obs, motivo_consulta = :motivo
             WHERE id = :id
         ");
@@ -271,11 +284,41 @@ if ($method === 'POST') {
             ':med_id' => $medico_id,
             ':tipo'   => $tipo,
             ':precio' => $precio_usd,
+            ':estado' => $estado,
             ':obs'    => $observaciones,
             ':motivo' => $motivo,
             ':id'     => $cita_id
         ]);
-        sendJsonResponse(true, null, 'Cita modificada exitosamente');
+
+        // Retornar la cita actualizada con información de médico, paciente y consultorio
+        $stmtUpdated = $pdo->prepare("
+            SELECT 
+                c.*,
+                p.nombre AS paciente_nombre,
+                p.cedula AS paciente_cedula,
+                p.telefono AS paciente_telefono,
+                p.representante AS paciente_representante,
+                p.tipo_beneficio AS paciente_tipo_beneficio,
+                m.nombre AS medico_nombre,
+                m.especialidad AS medico_especialidad,
+                cons.nombre AS consultorio_nombre,
+                cons.numero AS consultorio_numero
+            FROM citas c
+            INNER JOIN pacientes p ON p.id = c.paciente_id
+            INNER JOIN medicos m ON m.id = c.medico_id
+            INNER JOIN consultorios cons ON cons.id = c.consultorio_id
+            WHERE c.id = :id
+        ");
+        $stmtUpdated->execute([':id' => $cita_id]);
+        $citaUpdated = $stmtUpdated->fetch();
+
+        if ($citaUpdated) {
+            $cstmt = $pdo->prepare("SELECT * FROM pagos_citas WHERE cita_id = :cid ORDER BY numero_pago ASC");
+            $cstmt->execute([':cid' => $cita_id]);
+            $citaUpdated['pagos'] = $cstmt->fetchAll();
+        }
+
+        sendJsonResponse(true, $citaUpdated, 'Cita modificada exitosamente');
     }
 
     if ($action === 'cancelar') {

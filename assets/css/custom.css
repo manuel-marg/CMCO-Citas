@@ -723,3 +723,11 @@ body {
 #section-beneficios table thead th {
     vertical-align: middle !important;
 }
+
+/* Modal Detalle de Cita: Parámetros Editables */
+.modal-parametros-cita {
+    padding: 12px 14px !important;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+}

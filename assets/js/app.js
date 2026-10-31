@@ -117,6 +117,16 @@ async function initApp() {
     // Inicializar tooltips de Bootstrap
     inicializarTooltips();
 
+    // Listener para guardar precio pendiente al cerrar el modal de detalle
+    const modalEstadoEl = document.getElementById('modalEstado');
+    if (modalEstadoEl) {
+        modalEstadoEl.addEventListener('hide.bs.modal', () => {
+            if (AppState.citaSeleccionada) {
+                manejarCambioPrecioCita();
+            }
+        });
+    }
+
     window.addEventListener('hashchange', () => {
         const h = window.location.hash.replace('#', '');
         if (h && ['agenda', 'liquidacion', 'beneficios', 'pacientes', 'medicos'].includes(h)) {
@@ -999,10 +1009,54 @@ async function abrirDetalleCita(citaId) {
         `C.I: ${cita.paciente_cedula || 'S/C'} · Teléfono: ${cita.paciente_telefono || 'No registrado'}`;
     
     document.getElementById('det_hora').innerText = formatearHora12(cita.hora);
-    document.getElementById('det_consultorio').innerText = cita.consultorio_nombre;
-    document.getElementById('det_medico').innerText = cita.medico_nombre;
-    document.getElementById('det_tipo').innerText = cita.tipo;
-    document.getElementById('det_precio').innerText = `$${parseFloat(cita.precio_usd).toFixed(2)}`;
+    const numConsultorio = cita.consultorio_numero || (cita.consultorio_nombre ? cita.consultorio_nombre.replace(/\D/g, '') : '') || cita.consultorio_id || '1';
+    document.getElementById('det_consultorio').innerText = numConsultorio;
+
+    // Poblar y seleccionar Médico
+    const selectMed = document.getElementById('det_medico_id');
+    if (selectMed) {
+        selectMed.innerHTML = '';
+        if (Array.isArray(AppState.medicos)) {
+            AppState.medicos.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.text = `${m.nombre} (${m.especialidad})`;
+                if (m.id == cita.medico_id) opt.selected = true;
+                selectMed.appendChild(opt);
+            });
+            // Si el médico asignado a la cita no está en la lista de activos, agregarlo como primera opción
+            if (cita.medico_id && !AppState.medicos.some(m => m.id == cita.medico_id)) {
+                const opt = document.createElement('option');
+                opt.value = cita.medico_id;
+                opt.text = `${cita.medico_nombre} (${cita.medico_especialidad || 'Especialista'})`;
+                opt.selected = true;
+                selectMed.insertBefore(opt, selectMed.firstChild);
+            }
+        }
+        selectMed.value = cita.medico_id;
+    }
+
+    // Tipo de cita
+    const selectTipo = document.getElementById('det_tipo');
+    if (selectTipo) {
+        selectTipo.value = cita.tipo || 'Particular';
+    }
+
+    // Precio
+    const inputPrecio = document.getElementById('det_precio');
+    if (inputPrecio) {
+        inputPrecio.value = parseFloat(cita.precio_usd || 50.00).toFixed(2);
+    }
+
+    // Estado de la cita
+    const selectEstado = document.getElementById('det_estado');
+    if (selectEstado) {
+        selectEstado.value = cita.estado || 'Agendada';
+    }
+
+    // Ocultar indicador de guardado si estaba visible
+    const ind = document.getElementById('det_auto_save_indicator');
+    if (ind) ind.classList.add('d-none');
 
     const estadoInfo = AppState.estados[cita.estado] || { label: cita.estado, badge: 'primary', emoji: '' };
     const badgeEl = document.getElementById('det_estado_badge');
@@ -1034,6 +1088,197 @@ async function abrirDetalleCita(citaId) {
 
     const modal = new bootstrap.Modal(document.getElementById('modalEstado'));
     modal.show();
+}
+
+/**
+ * Controladores de autoguardado para Médico, Tipo y Precio en Detalle de Cita
+ */
+let timerDetalleAutoSave = null;
+
+function manejarCambioMedicoCita() {
+    if (!AppState.citaSeleccionada) return;
+    const selectMed = document.getElementById('det_medico_id');
+    if (!selectMed) return;
+    const nuevoMedId = parseInt(selectMed.value);
+    if (nuevoMedId && nuevoMedId != AppState.citaSeleccionada.medico_id) {
+        autoGuardarDetalleCita('medico');
+    }
+}
+
+function manejarCambioTipoCita() {
+    if (!AppState.citaSeleccionada) return;
+    const selectTipo = document.getElementById('det_tipo');
+    if (!selectTipo) return;
+    const nuevoTipo = selectTipo.value;
+    if (nuevoTipo && nuevoTipo !== AppState.citaSeleccionada.tipo) {
+        autoGuardarDetalleCita('tipo');
+    }
+}
+
+function manejarCambioPrecioCita() {
+    if (!AppState.citaSeleccionada) return;
+    const inputPrecio = document.getElementById('det_precio');
+    if (!inputPrecio) return;
+    const rawVal = inputPrecio.value;
+    const nuevoPrecio = parseFloat(rawVal);
+    const precioActual = parseFloat(AppState.citaSeleccionada.precio_usd);
+    if (!isNaN(nuevoPrecio) && nuevoPrecio >= 0 && Math.abs(nuevoPrecio - precioActual) > 0.001) {
+        autoGuardarDetalleCita('precio');
+    }
+}
+
+async function manejarCambioEstadoCita() {
+    if (!AppState.citaSeleccionada) return;
+    const selectEstado = document.getElementById('det_estado');
+    if (!selectEstado) return;
+    const nuevoEstado = selectEstado.value;
+    if (!nuevoEstado || nuevoEstado === AppState.citaSeleccionada.estado) return;
+
+    const ind = document.getElementById('det_auto_save_indicator');
+    if (ind) {
+        ind.className = 'text-primary small fw-semibold';
+        ind.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" style="width: 0.75rem; height: 0.75rem;"></span> Guardando...';
+        ind.classList.remove('d-none');
+    }
+
+    try {
+        const res = await fetch('api/citas.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'cambiar_estado',
+                cita_id: AppState.citaSeleccionada.id,
+                estado: nuevoEstado
+            })
+        });
+
+        const json = await res.json();
+        if (json.success) {
+            AppState.citaSeleccionada.estado = nuevoEstado;
+
+            // Actualizar badge superior
+            const estadoInfo = AppState.estados[nuevoEstado] || { label: nuevoEstado, badge: 'primary', emoji: '' };
+            const badgeEl = document.getElementById('det_estado_badge');
+            if (badgeEl) {
+                badgeEl.className = `badge bg-${estadoInfo.badge}`;
+                badgeEl.innerText = `${estadoInfo.emoji} ${estadoInfo.label}`;
+            }
+
+            // Indicador de autoguardado
+            if (ind) {
+                ind.className = 'text-success small fw-semibold';
+                ind.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Guardado automáticamente';
+                if (timerDetalleAutoSave) clearTimeout(timerDetalleAutoSave);
+                timerDetalleAutoSave = setTimeout(() => {
+                    if (ind) ind.classList.add('d-none');
+                }, 2500);
+            }
+
+            mostrarToast(`Estado actualizado a: ${nuevoEstado}`, 'success');
+
+            // Refrescar agenda de fondo
+            cargarAgendaSegunVista();
+        } else {
+            if (ind) ind.classList.add('d-none');
+            selectEstado.value = AppState.citaSeleccionada.estado;
+            mostrarToast(json.message || 'Error al cambiar estado', 'danger');
+        }
+    } catch (e) {
+        console.error('Error al cambiar estado:', e);
+        if (ind) ind.classList.add('d-none');
+        selectEstado.value = AppState.citaSeleccionada.estado;
+        mostrarToast('Error de comunicación al cambiar estado', 'danger');
+    }
+}
+
+async function autoGuardarDetalleCita(campoModificado) {
+    if (!AppState.citaSeleccionada) return;
+    const citaId = AppState.citaSeleccionada.id;
+
+    const selectMed = document.getElementById('det_medico_id');
+    const selectTipo = document.getElementById('det_tipo');
+    const inputPrecio = document.getElementById('det_precio');
+    const selectEstado = document.getElementById('det_estado');
+
+    const medicoId = selectMed ? (parseInt(selectMed.value) || AppState.citaSeleccionada.medico_id) : AppState.citaSeleccionada.medico_id;
+    const tipo = selectTipo ? (selectTipo.value || AppState.citaSeleccionada.tipo) : AppState.citaSeleccionada.tipo;
+    const precio = inputPrecio ? (parseFloat(inputPrecio.value) || 0) : AppState.citaSeleccionada.precio_usd;
+    const estado = selectEstado ? (selectEstado.value || AppState.citaSeleccionada.estado) : AppState.citaSeleccionada.estado;
+
+    if (isNaN(precio) || precio < 0) {
+        mostrarToast('Por favor ingrese un precio válido (mayor o igual a 0)', 'warning');
+        return;
+    }
+
+    const ind = document.getElementById('det_auto_save_indicator');
+    if (ind) {
+        ind.className = 'text-primary small fw-semibold';
+        ind.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" style="width: 0.75rem; height: 0.75rem;"></span> Guardando...';
+        ind.classList.remove('d-none');
+    }
+
+    try {
+        const res = await fetch('api/citas.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'editar',
+                cita_id: citaId,
+                medico_id: medicoId,
+                tipo: tipo,
+                precio_usd: precio,
+                estado: estado
+            })
+        });
+
+        const json = await res.json();
+        if (json.success) {
+            // Actualizar AppState.citaSeleccionada
+            if (json.data) {
+                AppState.citaSeleccionada = json.data;
+            } else {
+                AppState.citaSeleccionada.medico_id = medicoId;
+                AppState.citaSeleccionada.tipo = tipo;
+                AppState.citaSeleccionada.precio_usd = precio;
+                const med = (AppState.medicos || []).find(m => m.id == medicoId);
+                if (med) {
+                    AppState.citaSeleccionada.medico_nombre = med.nombre;
+                    AppState.citaSeleccionada.medico_especialidad = med.especialidad;
+                }
+            }
+
+            // Mostrar feedback de guardado exitoso
+            if (ind) {
+                ind.className = 'text-success small fw-semibold';
+                ind.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Guardado automáticamente';
+                if (timerDetalleAutoSave) clearTimeout(timerDetalleAutoSave);
+                timerDetalleAutoSave = setTimeout(() => {
+                    if (ind) ind.classList.add('d-none');
+                }, 2500);
+            }
+
+            // Notificación breve toast
+            let msjToast = 'Cambio guardado automáticamente';
+            if (campoModificado === 'medico') {
+                msjToast = `Médico actualizado: ${AppState.citaSeleccionada.medico_nombre}`;
+            } else if (campoModificado === 'tipo') {
+                msjToast = `Tipo de cita actualizado a: ${tipo}`;
+            } else if (campoModificado === 'precio') {
+                msjToast = `Precio actualizado a: $${precio.toFixed(2)}`;
+            }
+            mostrarToast(msjToast, 'success');
+
+            // Refrescar la agenda de fondo para reflejar de inmediato los cambios en la matriz
+            cargarAgendaSegunVista();
+        } else {
+            if (ind) ind.classList.add('d-none');
+            mostrarToast(json.message || 'Error al guardar cambios', 'danger');
+        }
+    } catch (e) {
+        console.error('Error al autoguardar cita:', e);
+        if (ind) ind.classList.add('d-none');
+        mostrarToast('Error de comunicación al guardar cambios', 'danger');
+    }
 }
 
 async function ejecutarCambioEstado(nuevoEstado) {
@@ -1986,6 +2231,20 @@ function actualizarSelectsMedicos(medicosActivos) {
             selFiltro.appendChild(opt);
         });
         if (valorActual) selFiltro.value = valorActual;
+    }
+
+    // Actualizar select de médicos en detalle de cita
+    const selDetMed = document.getElementById('det_medico_id');
+    if (selDetMed && selDetMed.options.length > 0) {
+        const valorActual = selDetMed.value;
+        selDetMed.innerHTML = '';
+        medicosActivos.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m.id;
+            opt.text = `${m.nombre} (${m.especialidad})`;
+            selDetMed.appendChild(opt);
+        });
+        if (valorActual) selDetMed.value = valorActual;
     }
 }
 
