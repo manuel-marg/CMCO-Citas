@@ -114,6 +114,26 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute([':fini' => $inicio, ':ffin' => $fin]);
 $filasMetodos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+// Consulta de detalle individual de pagos para la Sección 3
+$sqlDetalle = "
+    SELECT 
+        c.fecha,
+        COALESCE(pac.nombre, 'Sin Nombre') AS paciente_nombre,
+        p.forma_pago,
+        p.monto_usd,
+        p.monto_bs,
+        p.referencia
+    FROM pagos_citas p
+    JOIN citas c ON p.cita_id = c.id
+    LEFT JOIN pacientes pac ON c.paciente_id = pac.id
+    WHERE c.fecha BETWEEN :fini AND :ffin
+      AND c.estado IN ('Pagado', 'Facturado')
+    ORDER BY c.fecha ASC, c.hora ASC, p.id ASC
+";
+$stmtDetalle = $pdo->prepare($sqlDetalle);
+$stmtDetalle->execute([':fini' => $inicio, ':ffin' => $fin]);
+$pagosDetalle = $stmtDetalle->fetchAll(PDO::FETCH_ASSOC);
+
 // Totales Generales
 $granTotalTransacciones = 0;
 $granTotalUsd = 0.0;
@@ -370,39 +390,98 @@ $pdf->SetFont('Arial', 'B', 8.5);
 $pdf->SetTextColor(29, 67, 83);
 $pdf->Cell(45, 8, '$ ' . number_format($resumenMoneda['USD']['total_usd'], 2, '.', ',') . '  ', 1, 1, 'R', true);
 
-// Bloque de Firma y Control Administrativo
-$pdf->Ln(14);
-$yFirmas = $pdf->GetY();
-if ($yFirmas > 230) {
+// -------------------------------------------------------------
+// SECCIÓN 3: DETALLE DE PAGOS DE LA SEMANA
+// -------------------------------------------------------------
+$pdf->Ln(8);
+
+// Si queda poco espacio para arrancar la sección 3 con su cabecera y primeras filas, iniciar en nueva página
+if ($pdf->GetY() > 215) {
     $pdf->AddPage();
-    $yFirmas = $pdf->GetY() + 10;
 }
 
-$pdf->SetY($yFirmas);
-$pdf->SetDrawColor(180, 180, 180);
-$pdf->SetLineWidth(0.3);
+$pdf->SetFont('Arial', 'B', 10);
+$pdf->SetTextColor(29, 67, 83);
+$pdf->Cell(195, 6, pdfTxt('3. DETALLE DE PAGOS DE LA SEMANA'), 0, 1, 'L');
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(100, 100, 100);
+$pdf->Cell(195, 4, pdfTxt('Relación pormenorizada de cada uno de los cobros ejecutados durante la semana seleccionada.'), 0, 1, 'L');
+$pdf->Ln(2);
 
-// Línea Firma 1 (Administración)
-$pdf->Line(25, $yFirmas + 15, 85, $yFirmas + 15);
-$pdf->SetXY(25, $yFirmas + 16);
-$pdf->SetFont('Arial', 'B', 8);
-$pdf->SetTextColor(50, 50, 50);
-$pdf->Cell(60, 4, pdfTxt('Administración / Finanzas'), 0, 1, 'C');
-$pdf->SetX(25);
-$pdf->SetFont('Arial', '', 7.5);
-$pdf->SetTextColor(120, 120, 120);
-$pdf->Cell(60, 4, pdfTxt('Centro Médico Comunitario OscaryAnny'), 0, 0, 'C');
+function imprimirCabeceraTablaDetalle(FPDF $pdf): void {
+    $pdf->SetFont('Arial', 'B', 8.5);
+    $pdf->SetFillColor(79, 144, 165); // #4f90a5
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetDrawColor(56, 115, 135);
+    $pdf->SetLineWidth(0.3);
 
-// Línea Firma 2 (Control de Caja)
-$pdf->Line(125, $yFirmas + 15, 185, $yFirmas + 15);
-$pdf->SetXY(125, $yFirmas + 16);
-$pdf->SetFont('Arial', 'B', 8);
-$pdf->SetTextColor(50, 50, 50);
-$pdf->Cell(60, 4, pdfTxt('Control de Caja y Recepción'), 0, 1, 'C');
-$pdf->SetX(125);
-$pdf->SetFont('Arial', '', 7.5);
-$pdf->SetTextColor(120, 120, 120);
-$pdf->Cell(60, 4, pdfTxt('Revisado y Conforme'), 0, 0, 'C');
+    // Suma de anchos: 25 + 75 + 55 + 40 = 195 mm
+    $pdf->Cell(25, 7.5, pdfTxt('Fecha'), 1, 0, 'C', true);
+    $pdf->Cell(75, 7.5, pdfTxt('  Nombre del Paciente'), 1, 0, 'L', true);
+    $pdf->Cell(55, 7.5, pdfTxt('  Método de Pago'), 1, 0, 'L', true);
+    $pdf->Cell(40, 7.5, pdfTxt('Monto  '), 1, 1, 'R', true);
+}
+
+imprimirCabeceraTablaDetalle($pdf);
+
+$pdf->SetFont('Arial', '', 8.5);
+$pdf->SetDrawColor(226, 232, 240);
+$pdf->SetLineWidth(0.2);
+
+if (empty($pagosDetalle)) {
+    $pdf->SetFillColor(255, 255, 255);
+    $pdf->SetTextColor(120, 120, 120);
+    $pdf->Cell(195, 10, pdfTxt('No se registraron transacciones individuales en este período.'), 1, 1, 'C', true);
+} else {
+    $fill = false;
+    foreach ($pagosDetalle as $d) {
+        if ($pdf->GetY() > 255) {
+            $pdf->AddPage();
+            imprimirCabeceraTablaDetalle($pdf);
+            $pdf->SetFont('Arial', '', 8.5);
+            $pdf->SetDrawColor(226, 232, 240);
+            $pdf->SetLineWidth(0.2);
+        }
+
+        if ($fill) {
+            $pdf->SetFillColor(248, 249, 250);
+        } else {
+            $pdf->SetFillColor(255, 255, 255);
+        }
+
+        $monedaDet = clasificarMonedaFormaPago($d['forma_pago']);
+        $fechaFmt = date('d/m/Y', strtotime($d['fecha']));
+        $pacienteStr = mb_substr($d['paciente_nombre'], 0, 42);
+
+        // 1. Fecha
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->SetTextColor(70, 70, 70);
+        $pdf->Cell(25, 7, $fechaFmt, 1, 0, 'C', true);
+
+        // 2. Nombre del Paciente
+        $pdf->SetFont('Arial', 'B', 8.5);
+        $pdf->SetTextColor(29, 67, 83);
+        $pdf->Cell(75, 7, pdfTxt('  ' . $pacienteStr), 1, 0, 'L', true);
+
+        // 3. Método de Pago
+        $pdf->SetFont('Arial', '', 8);
+        $pdf->SetTextColor(80, 85, 90);
+        $pdf->Cell(55, 7, pdfTxt('  ' . $d['forma_pago']), 1, 0, 'L', true);
+
+        // 4. Monto
+        $pdf->SetFont('Arial', 'B', 8.5);
+        if ($monedaDet === 'Bs') {
+            $pdf->SetTextColor(30, 30, 30);
+            $montoStr = number_format((float)$d['monto_bs'], 2, ',', '.') . ' Bs.  ';
+        } else {
+            $pdf->SetTextColor(29, 67, 83);
+            $montoStr = '$ ' . number_format((float)$d['monto_usd'], 2, '.', ',') . '  ';
+        }
+        $pdf->Cell(40, 7, $montoStr, 1, 1, 'R', true);
+
+        $fill = !$fill;
+    }
+}
 
 // Enviar PDF al navegador
 $nombreArchivo = 'Reporte_Semanal_Pagos_' . $inicio . '_al_' . $fin . '.pdf';
