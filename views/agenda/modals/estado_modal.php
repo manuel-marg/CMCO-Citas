@@ -38,7 +38,7 @@
                     <div class="modal-parametros-cita bg-white rounded-3 border border-secondary-subtle my-2" style="padding: 12px 14px;">
                         <div class="d-flex justify-content-between align-items-center mb-1.5">
                             <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
-                                <i class="bi bi-pencil-square text-primary me-1"></i> Parámetros de Cita (Autoguardado):
+                                <i class="bi bi-pencil-square text-primary me-1"></i> Parámetros de Cita:
                             </span>
                             <span id="det_auto_save_indicator" class="text-success small fw-semibold d-none" style="font-size: 0.72rem;">
                                 <i class="bi bi-check-circle-fill me-1"></i> Guardado automáticamente
