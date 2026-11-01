@@ -102,8 +102,8 @@
                         </div>
                     </div>
 
-                    <!-- Facturación y Estado Final -->
-                    <div class="row g-3 p-3 bg-light rounded-3 border">
+                    <!-- Facturación y Estado Final (Oculto para simplificar la interfaz) -->
+                    <div class="row g-3 p-3 bg-light rounded-3 border d-none">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small">
                                 <i class="bi bi-receipt me-1"></i> N° Factura / Empleado Responsable:

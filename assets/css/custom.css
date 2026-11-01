@@ -1041,3 +1041,38 @@ body {
         max-width: 100%;
     }
 }
+
+/* =============================================================
+   CITAS PASADAS CON PAGO REGISTRADO (Fondo Verde Claro)
+   ============================================================= */
+.cita-card.cita-pagada-pasada {
+    background-color: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+}
+
+.cita-card.cita-pagada-pasada:hover {
+    background-color: #d1fae5 !important;
+    border-color: #6ee7b7 !important;
+}
+
+.week-cita-item.cita-pagada-pasada {
+    background-color: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+}
+
+.week-cita-item.cita-pagada-pasada:hover {
+    background-color: #d1fae5 !important;
+    border-color: #6ee7b7 !important;
+}
+
+.cal-cita-chip.cita-pagada-pasada {
+    background-color: #ecfdf5 !important;
+    border-color: #a7f3d0 !important;
+    color: #065f46 !important;
+}
+
+.cal-cita-chip.cita-pagada-pasada:hover {
+    background-color: #d1fae5 !important;
+    border-color: #6ee7b7 !important;
+    color: #064e3b !important;
+}

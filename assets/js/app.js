@@ -464,6 +464,21 @@ function actualizarMetricas(metricas, citas) {
 }
 
 /**
+ * Determina si una cita ocurrió antes del día actual y cuenta con pago registrado.
+ * En tal caso, se le aplica un fondo verde claro distintivo a la tarjeta.
+ */
+function esCitaPasadaPagada(cita, fechaReferencia) {
+    if (!cita) return false;
+    const hoyStr = new Date().toISOString().slice(0, 10);
+    const fechaCita = cita.fecha || fechaReferencia;
+    if (!fechaCita || fechaCita >= hoyStr) {
+        return false;
+    }
+    const estado = cita.estado || '';
+    return estado === 'Pagado' || estado === 'Facturado' || (Array.isArray(cita.pagos) && cita.pagos.length > 0);
+}
+
+/**
  * -------------------------------------------------------------
  * 1. RENDERIZADO: VISTA DIARIA (3 CONSULTORIOS)
  * -------------------------------------------------------------
@@ -510,9 +525,10 @@ function renderizarVistaDia() {
                     const estadoInfo = AppState.estados[cita.estado] || { emoji: '📌', label: cita.estado, badge: 'primary', color: '#4f90a5' };
                     const precio = parseFloat(cita.precio_usd || 0);
                     const precioBadgeClass = cita.estado === 'Facturado' ? 'bg-dark' : (cita.estado === 'Pagado' ? 'bg-success' : 'bg-primary');
+                    const pagadaPasada = esCitaPasadaPagada(cita, AppState.fechaActual);
 
                     html += `
-                        <div class="cita-card mb-1" style="border-left-color: ${estadoInfo.color}; cursor: pointer;" onclick="abrirDetalleCita(${cita.id})">
+                        <div class="cita-card mb-1 ${pagadaPasada ? 'cita-pagada-pasada' : ''}" style="border-left-color: ${estadoInfo.color}; cursor: pointer;" onclick="abrirDetalleCita(${cita.id})">
                             <div>
                                 <div class="d-flex justify-content-between align-items-start mb-1">
                                     <span class="badge bg-${estadoInfo.badge} text-white" style="font-size: 0.72rem;">
@@ -616,9 +632,10 @@ function renderizarVistaSemana() {
                 const estadoInfo = AppState.estados[c.estado] || { emoji: '📌', color: '#4f90a5' };
                 const badgeConsClass = c.consultorio_id == 1 ? 'badge-c1' : (c.consultorio_id == 2 ? 'badge-c2' : 'badge-c3');
                 const consAbbr = c.consultorio_id == 1 ? 'C1' : (c.consultorio_id == 2 ? 'C2' : 'C3');
+                const pagadaPasada = esCitaPasadaPagada(c, fechaDia);
 
                 html += `
-                    <div class="week-cita-item" style="border-left-color: ${estadoInfo.color};" onclick="abrirDetalleCita(${c.id})">
+                    <div class="week-cita-item ${pagadaPasada ? 'cita-pagada-pasada' : ''}" style="border-left-color: ${estadoInfo.color};" onclick="abrirDetalleCita(${c.id})">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="fw-bold small text-dark">${formatearHora12(c.hora)}</span>
                             <span class="badge ${badgeConsClass}" style="font-size: 0.68rem;" title="${c.consultorio_nombre}">${consAbbr}</span>
@@ -761,8 +778,9 @@ function renderizarVistaMes() {
             const estadoInfo = AppState.estados[cita.estado] || { emoji: '📌', label: cita.estado, color: '#4f90a5' };
             const nombreCorto = acortarNombre(cita.paciente_nombre, 2);
             const emojiHtml = estadoInfo.emoji ? `<span class="cita-chip-emoji">${estadoInfo.emoji}</span>` : '';
+            const pagadaPasada = esCitaPasadaPagada(cita, c.fecha);
             html += `
-                <div class="cal-cita-chip" 
+                <div class="cal-cita-chip ${pagadaPasada ? 'cita-pagada-pasada' : ''}" 
                      style="border-left-color: ${estadoInfo.color}; cursor: pointer;" 
                      onclick="event.stopPropagation(); abrirDetalleCita(${cita.id})"
                      title="${formatearHora12(cita.hora)} ${estadoInfo.emoji || ''} ${cita.paciente_nombre} · ${cita.medico_nombre} (${estadoInfo.label || cita.estado}) - Clic para ver y editar">
@@ -1468,6 +1486,10 @@ function abrirCobroDesdeDetalle() {
     document.getElementById('cobrar_monto_1').value = precio.toFixed(2);
     document.getElementById('cobrar_monto_2').value = '0.00';
     document.getElementById('cobrar_factura_o_empleado').value = cita.factura_o_empleado || '';
+    const selEstadoFinal = document.getElementById('cobrar_estado_final');
+    if (selEstadoFinal) {
+        selEstadoFinal.value = (cita.estado === 'Facturado' || cita.estado === 'Pagado') ? cita.estado : 'Facturado';
+    }
 
     // Pago mixto off
     document.getElementById('checkPagoMixto').checked = false;
