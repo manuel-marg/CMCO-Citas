@@ -1556,6 +1556,76 @@ function obtenerTextoMesEs(mesStr) {
 }
 
 /**
+ * -------------------------------------------------------------
+ * GESTIÓN DE REPORTE SEMANAL DE INGRESOS (PDF)
+ * -------------------------------------------------------------
+ */
+let fechaSemanaReporteActual = null;
+
+function abrirModalReporteSemanal() {
+    fechaSemanaReporteActual = AppState.fechaActual || new Date().toISOString().slice(0, 10);
+    actualizarVistaSemanaReporte();
+    
+    const modalEl = document.getElementById('modalReporteSemanal');
+    if (modalEl) {
+        let bsModal = bootstrap.Modal.getInstance(modalEl);
+        if (!bsModal) {
+            bsModal = new bootstrap.Modal(modalEl);
+        }
+        bsModal.show();
+    }
+}
+
+function cambiarSemanaReporte(deltaSemanas) {
+    if (!fechaSemanaReporteActual) {
+        fechaSemanaReporteActual = AppState.fechaActual || new Date().toISOString().slice(0, 10);
+    }
+    const d = parseLocalDate(fechaSemanaReporteActual);
+    d.setDate(d.getDate() + (deltaSemanas * 7));
+    fechaSemanaReporteActual = formatDateISO(d);
+    actualizarVistaSemanaReporte();
+}
+
+function irASemanaActualReporte() {
+    fechaSemanaReporteActual = AppState.fechaActual || new Date().toISOString().slice(0, 10);
+    actualizarVistaSemanaReporte();
+}
+
+function actualizarVistaSemanaReporte() {
+    if (!fechaSemanaReporteActual) {
+        fechaSemanaReporteActual = AppState.fechaActual || new Date().toISOString().slice(0, 10);
+    }
+    const { inicio, fin } = obtenerLimitesSemana(fechaSemanaReporteActual);
+    const d1 = parseLocalDate(inicio);
+    const d2 = parseLocalDate(fin);
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    
+    const rangoTexto = `Semana del ${d1.getDate()} ${meses[d1.getMonth()]} al ${d2.getDate()} ${meses[d2.getMonth()]} ${d2.getFullYear()}`;
+    const diasTexto = `Lunes ${String(d1.getDate()).padStart(2, '0')}/${String(d1.getMonth() + 1).padStart(2, '0')} a Domingo ${String(d2.getDate()).padStart(2, '0')}/${String(d2.getMonth() + 1).padStart(2, '0')}`;
+    
+    const elRango = document.getElementById('rep_sem_rango_texto');
+    const elDias = document.getElementById('rep_sem_dias_subtexto');
+    
+    if (elRango) elRango.innerText = rangoTexto;
+    if (elDias) elDias.innerText = diasTexto;
+}
+
+function exportarReporteSemanalPDF() {
+    if (!fechaSemanaReporteActual) {
+        fechaSemanaReporteActual = AppState.fechaActual || new Date().toISOString().slice(0, 10);
+    }
+    const { inicio, fin } = obtenerLimitesSemana(fechaSemanaReporteActual);
+    
+    const modalEl = document.getElementById('modalReporteSemanal');
+    if (modalEl) {
+        const bsModal = bootstrap.Modal.getInstance(modalEl);
+        if (bsModal) bsModal.hide();
+    }
+    
+    window.open(`api/reporte_semanal_pdf.php?inicio=${inicio}&fin=${fin}`, '_blank');
+}
+
+/**
  * Genera y abre el archivo PDF oficial de liquidación médica en orientación horizontal
  */
 function exportarLiquidacionPDF() {

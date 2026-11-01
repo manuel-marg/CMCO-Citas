@@ -37,7 +37,10 @@
                     </button>
                 </div>
                 <div class="col-xl-3 col-lg-3 col-md-6 text-md-end d-flex align-items-center justify-content-md-end gap-2">
-                    <button class="btn btn-primary fw-bold shadow-sm" onclick="exportarLiquidacionPDF()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Exportar a PDF">
+                    <button class="btn btn-outline-primary fw-bold shadow-sm" onclick="abrirModalReporteSemanal()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reporte Semanal de Pagos">
+                        <i class="bi bi-calendar-week"></i>
+                    </button>
+                    <button class="btn btn-primary fw-bold shadow-sm" onclick="exportarLiquidacionPDF()" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Exportar a PDF (Liquidación Mensual)">
                         <i class="bi bi-file-earmark-pdf-fill"></i>
                     </button>
                     <button class="btn btn-outline-primary fw-bold shadow-sm" onclick="showSection('medicos')" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Gestionar Doctores">
@@ -109,6 +112,52 @@
                             <!-- Inyectado por JS -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal para Selección de Semana del Reporte de Pagos -->
+        <div class="modal fade" id="modalReporteSemanal" tabindex="-1" aria-labelledby="modalReporteSemanalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title fw-bold" id="modalReporteSemanalLabel">
+                            <i class="bi bi-calendar-week me-2"></i> Reporte Semanal de Pagos
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body p-4 text-center">
+                        <p class="text-muted mb-3">
+                            Seleccione la semana (de lunes a domingo) para generar el reporte consolidado de ingresos por método de pago y tipo de moneda en PDF:
+                        </p>
+
+                        <!-- Controles de navegación de semana -->
+                        <div class="d-flex align-items-center justify-content-between bg-light p-3 rounded-3 border mb-3 shadow-xs">
+                            <button class="btn btn-outline-primary" type="button" onclick="cambiarSemanaReporte(-1)" title="Semana anterior">
+                                <i class="bi bi-chevron-left fs-5"></i>
+                            </button>
+                            <div class="px-2">
+                                <div class="fw-bold fs-5 text-primary" id="rep_sem_rango_texto">Cargando semana...</div>
+                                <div class="small text-muted fw-semibold" id="rep_sem_dias_subtexto">Lunes a Domingo</div>
+                            </div>
+                            <button class="btn btn-outline-primary" type="button" onclick="cambiarSemanaReporte(1)" title="Semana siguiente">
+                                <i class="bi bi-chevron-right fs-5"></i>
+                            </button>
+                        </div>
+
+                        <!-- Acciones rápidas -->
+                        <div class="d-flex justify-content-center gap-2">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" onclick="irASemanaActualReporte()">
+                                <i class="bi bi-calendar-day me-1"></i> Esta Semana
+                            </button>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light justify-content-between">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn btn-primary fw-bold" onclick="exportarReporteSemanalPDF()">
+                            <i class="bi bi-file-earmark-pdf-fill me-1"></i> Generar Reporte PDF
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
