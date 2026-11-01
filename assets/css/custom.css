@@ -404,7 +404,7 @@ body {
 
 .calendar-days-header {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     background: #f8fafc;
     border-bottom: 2px solid #cbd5e1;
     text-align: center;
@@ -416,7 +416,7 @@ body {
 
 .calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     background: #e2e8f0;
     gap: 1px;
 }
@@ -430,6 +430,14 @@ body {
     position: relative;
     cursor: pointer;
     transition: background 0.15s ease;
+    min-width: 0;
+    overflow: hidden;
+}
+
+#btn-toggle-finde.active {
+    background-color: var(--cmco-primary) !important;
+    border-color: var(--cmco-primary) !important;
+    color: #ffffff !important;
 }
 
 .calendar-day-cell:hover {

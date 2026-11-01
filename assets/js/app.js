@@ -10,6 +10,7 @@ const AppState = {
     vistaActual: 'dia', // 'dia', 'semana', 'mes'
     fechaActual: new Date().toISOString().slice(0, 10),
     mesActual: new Date().toISOString().slice(0, 7),
+    mostrarFinesSemana: localStorage.getItem('cmco_mostrar_fines_semana') === 'true', // Oculto por defecto (L-V)
     filtroConsultorio: '',
     filtroMedico: '',
     tasaBcv: 888.8909,
@@ -104,6 +105,9 @@ async function initApp() {
 
     // Cargar datos y renderizar vista activa
     await cargarAgendaSegunVista();
+
+    // Inicializar estado del botón de fines de semana
+    actualizarBotonFinesSemana();
 
     // Configurar autocompletado de pacientes
     configurarAutocompletePacientes();
@@ -228,6 +232,16 @@ function cambiarVistaAgenda(nuevaVista) {
     if (nuevaVista === 'semana') cSemana.classList.remove('d-none');
     if (nuevaVista === 'mes') cMes.classList.remove('d-none');
 
+    // Alternar visibilidad del botón de fines de semana (solo visible en semana y mes)
+    const btnFinde = document.getElementById('btn-toggle-finde');
+    if (btnFinde) {
+        if (nuevaVista === 'dia') {
+            btnFinde.classList.add('d-none');
+        } else {
+            btnFinde.classList.remove('d-none');
+        }
+    }
+
     // Cargar datos
     cargarAgendaSegunVista();
 }
@@ -280,6 +294,41 @@ function actualizarMesDesdeInput() {
     AppState.fechaActual = `${AppState.mesActual}-01`;
     document.getElementById('agenda_fecha_selector').value = AppState.fechaActual;
     cargarAgendaSegunVista();
+}
+
+function toggleFinesDeSemanaAgenda() {
+    AppState.mostrarFinesSemana = !AppState.mostrarFinesSemana;
+    localStorage.setItem('cmco_mostrar_fines_semana', AppState.mostrarFinesSemana ? 'true' : 'false');
+    actualizarBotonFinesSemana();
+
+    if (AppState.mostrarFinesSemana) {
+        mostrarToast('Mostrando días Sábado y Domingo (Semana completa)', 'info', 'Fines de Semana Visibles');
+    } else {
+        mostrarToast('Ocultando Sábado y Domingo (Modo Lunes a Viernes)', 'info', 'Semana Laboral');
+    }
+
+    if (AppState.vistaActual === 'semana') {
+        renderizarVistaSemana();
+    } else if (AppState.vistaActual === 'mes') {
+        renderizarVistaMes();
+    }
+}
+
+function actualizarBotonFinesSemana() {
+    const btn = document.getElementById('btn-toggle-finde');
+    if (!btn) return;
+
+    if (AppState.mostrarFinesSemana) {
+        btn.classList.add('active', 'btn-primary');
+        btn.classList.remove('btn-outline-secondary');
+        btn.title = 'Fines de semana visibles (Clic para ocultar Sáb y Dom)';
+        btn.setAttribute('aria-label', 'Fines de semana visibles');
+    } else {
+        btn.classList.remove('active', 'btn-primary');
+        btn.classList.add('btn-outline-secondary');
+        btn.title = 'Fines de semana ocultos (Clic para mostrar Sáb y Dom)';
+        btn.setAttribute('aria-label', 'Fines de semana ocultos');
+    }
 }
 
 function toggleFiltrosAgenda() {
@@ -520,9 +569,12 @@ function renderizarVistaSemana() {
     const hoyStr = new Date().toISOString().slice(0, 10);
     const nombresDias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+    // Si los fines de semana están ocultos, mostrar sólo Lunes a Viernes (5 días)
+    const diasMostrar = AppState.mostrarFinesSemana ? dias : dias.slice(0, 5);
+
     let html = '';
 
-    dias.forEach((fechaDia, idx) => {
+    diasMostrar.forEach((fechaDia, idx) => {
         const esHoy = fechaDia === hoyStr;
         const citasDelDia = AppState.citasPorDia[fechaDia] || [];
         const diaNum = parseLocalDate(fechaDia).getDate();
@@ -638,6 +690,50 @@ function renderizarVistaMes() {
         for (let d = 1; d <= diasFaltantes; d++) {
             const fechaStr = formatDateISO(new Date(anio, mes + 1, d));
             celdas.push({ fecha: fechaStr, numero: d, otroMes: true });
+        }
+    }
+
+    // Configurar columnas y filtrar fines de semana según preferencia
+    const header = document.querySelector('.calendar-days-header');
+    if (!AppState.mostrarFinesSemana) {
+        // Filtrar sábados y domingos (índices 5 y 6 de cada bloque de 7 días)
+        const celdasFiltradas = [];
+        for (let i = 0; i < celdas.length; i++) {
+            const posSemana = i % 7; // 0=Lun, 1=Mar, 2=Mie, 3=Jue, 4=Vie, 5=Sab, 6=Dom
+            if (posSemana < 5) {
+                celdasFiltradas.push(celdas[i]);
+            }
+        }
+        celdas = celdasFiltradas;
+
+        if (header) {
+            header.innerHTML = `
+                <div>Lunes</div>
+                <div>Martes</div>
+                <div>Miércoles</div>
+                <div>Jueves</div>
+                <div>Viernes</div>
+            `;
+            header.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
+        }
+        if (container) {
+            container.style.gridTemplateColumns = 'repeat(5, minmax(0, 1fr))';
+        }
+    } else {
+        if (header) {
+            header.innerHTML = `
+                <div>Lunes</div>
+                <div>Martes</div>
+                <div>Miércoles</div>
+                <div>Jueves</div>
+                <div>Viernes</div>
+                <div class="text-secondary opacity-75">Sábado</div>
+                <div class="text-secondary opacity-75">Domingo</div>
+            `;
+            header.style.gridTemplateColumns = 'repeat(7, minmax(0, 1fr))';
+        }
+        if (container) {
+            container.style.gridTemplateColumns = 'repeat(7, minmax(0, 1fr))';
         }
     }
 

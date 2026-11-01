@@ -52,8 +52,11 @@
                     </button>
                 </div>
 
-                <!-- Botones de Acción: Filtrar y Agendar Cita (Solo Iconos) -->
+                <!-- Botones de Acción: Fines de Semana (Sáb/Dom), Filtrar y Agendar Cita -->
                 <div class="col-xl-4 col-lg-3 col-md-12 text-md-end d-flex justify-content-md-end justify-content-start gap-2">
+                    <button type="button" class="btn btn-outline-secondary shadow-sm d-none" id="btn-toggle-finde" onclick="toggleFinesDeSemanaAgenda()" title="Mostrar fines de semana (Sáb y Dom)" aria-label="Mostrar fines de semana">
+                        <i class="bi bi-calendar2-range"></i>
+                    </button>
                     <button type="button" class="btn btn-outline-primary shadow-sm" id="btn-toggle-filtros" onclick="toggleFiltrosAgenda()" title="Mostrar u ocultar filtros" aria-label="Filtrar">
                         <i class="bi bi-funnel"></i>
                     </button>
