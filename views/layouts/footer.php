@@ -1,10 +1,11 @@
-    <!-- Toast Notifications Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3 no-print" style="z-index: 1100;">
+    <!-- Toast Notifications Container (ToastifyPro White Aesthetic) -->
+    <div id="toastProContainer" class="toast-pro-container bottom-right no-print" aria-live="polite" aria-atomic="false"></div>
+
+    <!-- Legacy Toast Container (para compatibilidad de librerías de terceros si existieran) -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3 no-print d-none" style="z-index: 1050;">
         <div id="liveToast" class="toast align-items-center text-white bg-primary border-0 shadow-lg" role="alert" aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body fs-6" id="toastMessage">
-                    Operación realizada exitosamente.
-                </div>
+                <div class="toast-body fs-6" id="toastMessage">Operación realizada exitosamente.</div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         </div>

@@ -76,7 +76,7 @@
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light text-success fw-bold px-1.5">$</span>
-                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm fw-bold text-end border-secondary-subtle" id="det_precio" onchange="manejarCambioPrecioCita()" onblur="manejarCambioPrecioCita()" onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }" placeholder="0.00">
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm fw-bold text-end border-secondary-subtle" id="det_precio" onchange="manejarCambioPrecioCita()" onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }" placeholder="0.00">
                                 </div>
                             </div>
                         </div>

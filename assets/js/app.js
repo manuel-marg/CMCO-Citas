@@ -1115,6 +1115,7 @@ function manejarCambioTipoCita() {
     }
 }
 
+let timerPrecioDebounce = null;
 function manejarCambioPrecioCita() {
     if (!AppState.citaSeleccionada) return;
     const inputPrecio = document.getElementById('det_precio');
@@ -1123,7 +1124,13 @@ function manejarCambioPrecioCita() {
     const nuevoPrecio = parseFloat(rawVal);
     const precioActual = parseFloat(AppState.citaSeleccionada.precio_usd);
     if (!isNaN(nuevoPrecio) && nuevoPrecio >= 0 && Math.abs(nuevoPrecio - precioActual) > 0.001) {
-        autoGuardarDetalleCita('precio');
+        if (timerPrecioDebounce) clearTimeout(timerPrecioDebounce);
+        timerPrecioDebounce = setTimeout(() => {
+            const precioActualRevisado = parseFloat(AppState.citaSeleccionada.precio_usd);
+            if (Math.abs(nuevoPrecio - precioActualRevisado) > 0.001) {
+                autoGuardarDetalleCita('precio');
+            }
+        }, 60);
     }
 }
 
@@ -1259,14 +1266,18 @@ async function autoGuardarDetalleCita(campoModificado) {
 
             // Notificación breve toast
             let msjToast = 'Cambio guardado automáticamente';
+            let titToast = 'Cita Actualizada';
             if (campoModificado === 'medico') {
-                msjToast = `Médico actualizado: ${AppState.citaSeleccionada.medico_nombre}`;
+                titToast = 'Médico Asignado';
+                msjToast = AppState.citaSeleccionada.medico_nombre;
             } else if (campoModificado === 'tipo') {
-                msjToast = `Tipo de cita actualizado a: ${tipo}`;
+                titToast = 'Tipo de Cita';
+                msjToast = tipo;
             } else if (campoModificado === 'precio') {
-                msjToast = `Precio actualizado a: $${precio.toFixed(2)}`;
+                titToast = 'Precio Actualizado';
+                msjToast = `$${precio.toFixed(2)} USD`;
             }
-            mostrarToast(msjToast, 'success');
+            mostrarToast(msjToast, 'success', titToast);
 
             // Refrescar la agenda de fondo para reflejar de inmediato los cambios en la matriz
             cargarAgendaSegunVista();
@@ -2260,11 +2271,253 @@ function formatearNumero(num, decimales = 2) {
     }).format(num);
 }
 
-function mostrarToast(mensaje, tipo = 'success') {
-    const toastEl = document.getElementById('liveToast');
-    const toastMsg = document.getElementById('toastMessage');
-    toastEl.className = `toast align-items-center text-white bg-${tipo} border-0 shadow-lg`;
-    toastMsg.innerText = mensaje;
-    const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
-    toast.show();
+/**
+ * -------------------------------------------------------------
+ * SISTEMA PROFESIONAL DE NOTIFICACIONES TOAST (WHITE THEME)
+ * Inspirado en Toastify-Pro (teguig-med / Codepen)
+ * -------------------------------------------------------------
+ */
+const ToastProManager = {
+    activeToasts: [],
+    maxVisible: 4,
+    lastToastKey: '',
+    lastToastTime: 0,
+
+    getIconSVG(tipo) {
+        switch (tipo) {
+            case 'success':
+                return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>`;
+            case 'danger':
+            case 'error':
+                return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>`;
+            case 'warning':
+                return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>`;
+            case 'info':
+            default:
+                return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>`;
+        }
+    },
+
+    formatContent(mensaje, tipo, tituloPersonalizado) {
+        let titulo = tituloPersonalizado || '';
+        let descripcion = mensaje || '';
+
+        // Si ya viene título explícito, respetar
+        if (titulo) {
+            return { titulo, descripcion };
+        }
+
+        // Detección inteligente de textos habituales de la aplicación
+        if (typeof mensaje === 'string') {
+            if (mensaje.startsWith('Estado actualizado a:') || mensaje.startsWith('Estado cambiado a:')) {
+                const partes = mensaje.split(':');
+                const estado = partes[1] ? partes[1].trim() : '';
+                const estadoInfo = (window.AppState && AppState.estados && AppState.estados[estado]) || { label: estado, badge: 'primary', emoji: '📌' };
+                titulo = 'Estado Actualizado';
+                descripcion = `Cita cambiada a <span class="badge bg-${estadoInfo.badge} ms-1">${estadoInfo.emoji || ''} ${estadoInfo.label || estado}</span>`;
+            } else if (mensaje.startsWith('Médico actualizado:')) {
+                titulo = 'Médico Actualizado';
+                descripcion = `<strong>${mensaje.replace('Médico actualizado:', '').trim()}</strong>`;
+            } else if (mensaje.startsWith('Tipo de cita actualizado a:')) {
+                titulo = 'Tipo de Cita';
+                descripcion = `Actualizado a <strong>${mensaje.replace('Tipo de cita actualizado a:', '').trim()}</strong>`;
+            } else if (mensaje.startsWith('Precio actualizado a:')) {
+                titulo = 'Precio Actualizado';
+                descripcion = `Monto fijado en <strong>${mensaje.replace('Precio actualizado a:', '').trim()}</strong>`;
+            } else if (mensaje === 'Cita agendada exitosamente') {
+                titulo = '¡Cita Agendada!';
+                descripcion = 'El turno fue reservado exitosamente.';
+            } else if (mensaje === 'Cobro registrado y cita actualizada exitosamente') {
+                titulo = '¡Cobro Procesado!';
+                descripcion = 'Pago registrado y cita actualizada con éxito.';
+            } else if (mensaje === 'Tasa BCV actualizada exitosamente') {
+                titulo = 'Tasa BCV Guardada';
+                descripcion = 'La tasa oficial del BCV fue actualizada correctamente.';
+            } else if (mensaje === 'Cita cancelada y eliminada') {
+                titulo = 'Cita Cancelada';
+                descripcion = 'El turno ha sido cancelado y liberado.';
+            } else if (mensaje === 'Paciente registrado exitosamente') {
+                titulo = 'Paciente Registrado';
+                descripcion = 'La ficha médica se guardó correctamente.';
+            } else if (tipo === 'danger' || tipo === 'error') {
+                titulo = 'Error en la Operación';
+            } else if (tipo === 'warning') {
+                titulo = 'Atención';
+            } else if (tipo === 'info') {
+                titulo = 'Información';
+            } else {
+                titulo = '¡Operación Exitosa!';
+            }
+        }
+
+        return { titulo, descripcion };
+    },
+
+    removeToast(toastEl) {
+        if (!toastEl || toastEl.dataset.removing === 'true') return;
+        toastEl.dataset.removing = 'true';
+        toastEl.classList.add('removing');
+
+        const index = this.activeToasts.findIndex(t => t.element === toastEl);
+        if (index > -1) {
+            const tData = this.activeToasts[index];
+            if (tData.timeoutId) clearTimeout(tData.timeoutId);
+            this.activeToasts.splice(index, 1);
+        }
+
+        setTimeout(() => {
+            if (toastEl.parentNode) {
+                toastEl.parentNode.removeChild(toastEl);
+            }
+        }, 380);
+    }
+};
+
+function mostrarToast(mensaje, tipo = 'success', titulo = null, duracion = 3500) {
+    // Soporte para paso de objeto de configuración
+    if (typeof mensaje === 'object' && mensaje !== null) {
+        tipo = mensaje.tipo || mensaje.type || tipo;
+        titulo = mensaje.titulo || mensaje.title || titulo;
+        duracion = mensaje.duracion || mensaje.duration || duracion;
+        mensaje = mensaje.mensaje || mensaje.message || '';
+    }
+
+    // Normalizar tipos
+    if (tipo === 'error') tipo = 'danger';
+
+    // Obtener o crear contenedor dinámicamente
+    let container = document.getElementById('toastProContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastProContainer';
+        container.className = 'toast-pro-container bottom-right no-print';
+        document.body.appendChild(container);
+    }
+
+    // Limitar cantidad de toasts visibles simultáneamente
+    if (ToastProManager.activeToasts.length >= ToastProManager.maxVisible) {
+        const oldest = ToastProManager.activeToasts.shift();
+        if (oldest && oldest.element) {
+            ToastProManager.removeToast(oldest.element);
+        }
+    }
+
+    const { titulo: finalTitulo, descripcion: finalDescripcion } = ToastProManager.formatContent(mensaje, tipo, titulo);
+
+    // Prevención de duplicados rápidos (deduplicación en ventana de 700ms)
+    const toastSignature = `${tipo}__${finalTitulo}__${finalDescripcion}`;
+    const ahora = Date.now();
+    if (toastSignature === ToastProManager.lastToastKey && (ahora - ToastProManager.lastToastTime) < 700) {
+        return null;
+    }
+    ToastProManager.lastToastKey = toastSignature;
+    ToastProManager.lastToastTime = ahora;
+
+    // Crear elemento toast profesional
+    const toast = document.createElement('div');
+    toast.className = `toast-pro toast-pro-${tipo}`;
+    toast.setAttribute('role', tipo === 'danger' ? 'alert' : 'status');
+    toast.style.setProperty('--duration', `${duracion}ms`);
+
+    toast.innerHTML = `
+        <div class="toast-pro-shimmer"></div>
+        <div class="toast-pro-icon" aria-hidden="true">
+            ${ToastProManager.getIconSVG(tipo)}
+        </div>
+        <div class="toast-pro-content">
+            <div class="toast-pro-title">${finalTitulo}</div>
+            <div class="toast-pro-message">${finalDescripcion}</div>
+        </div>
+        <button type="button" class="toast-pro-close" aria-label="Cerrar notificación">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <div class="toast-pro-progress"></div>
+    `;
+
+    // Evento de cierre manual al hacer clic en la X
+    const closeBtn = toast.querySelector('.toast-pro-close');
+    if (closeBtn) {
+        closeBtn.onclick = (e) => {
+            e.stopPropagation();
+            ToastProManager.removeToast(toast);
+        };
+    }
+
+    // Control de tiempo y pausa al posar el cursor (Hover Pause)
+    const toastData = {
+        element: toast,
+        timeoutId: null,
+        startTime: Date.now(),
+        remainingTime: duracion,
+        isPaused: false
+    };
+
+    if (duracion > 0) {
+        toast.addEventListener('mouseenter', () => {
+            if (toast.dataset.removing === 'true') return;
+            if (toastData.timeoutId) {
+                clearTimeout(toastData.timeoutId);
+                toastData.remainingTime -= (Date.now() - toastData.startTime);
+                toastData.isPaused = true;
+            }
+        });
+
+        toast.addEventListener('mouseleave', () => {
+            if (toast.dataset.removing === 'true') return;
+            if (toastData.isPaused && toastData.remainingTime > 0) {
+                toastData.isPaused = false;
+                toastData.startTime = Date.now();
+                toastData.timeoutId = setTimeout(() => {
+                    ToastProManager.removeToast(toast);
+                }, toastData.remainingTime);
+            }
+        });
+
+        toastData.timeoutId = setTimeout(() => {
+            ToastProManager.removeToast(toast);
+        }, duracion);
+    }
+
+    ToastProManager.activeToasts.push(toastData);
+
+    // Insertar en contenedor
+    container.appendChild(toast);
+
+    // Animación de entrada Airdrop Pop
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+
+    return toast;
 }
+
+// Atajo accesible: cerrar el toast superior con tecla Escape (si no hay modal abierto)
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && ToastProManager.activeToasts.length > 0) {
+        const modalAbierto = document.querySelector('.modal.show');
+        if (!modalAbierto) {
+            const lastToast = ToastProManager.activeToasts[ToastProManager.activeToasts.length - 1];
+            if (lastToast && lastToast.element) {
+                ToastProManager.removeToast(lastToast.element);
+            }
+        }
+    }
+});
