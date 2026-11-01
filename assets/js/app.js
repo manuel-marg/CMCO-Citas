@@ -1167,7 +1167,7 @@ async function manejarCambioEstadoCita() {
             // Indicador de autoguardado
             if (ind) {
                 ind.className = 'text-success small fw-semibold';
-                ind.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Guardado automáticamente';
+                ind.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Guardado';
                 if (timerDetalleAutoSave) clearTimeout(timerDetalleAutoSave);
                 timerDetalleAutoSave = setTimeout(() => {
                     if (ind) ind.classList.add('d-none');
@@ -1250,7 +1250,7 @@ async function autoGuardarDetalleCita(campoModificado) {
             // Mostrar feedback de guardado exitoso
             if (ind) {
                 ind.className = 'text-success small fw-semibold';
-                ind.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Guardado automáticamente';
+                ind.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Guardado';
                 if (timerDetalleAutoSave) clearTimeout(timerDetalleAutoSave);
                 timerDetalleAutoSave = setTimeout(() => {
                     if (ind) ind.classList.add('d-none');

@@ -41,7 +41,7 @@
                                 <i class="bi bi-pencil-square text-primary me-1"></i> Parámetros de Cita:
                             </span>
                             <span id="det_auto_save_indicator" class="text-success small fw-semibold d-none" style="font-size: 0.72rem;">
-                                <i class="bi bi-check-circle-fill me-1"></i> Guardado automáticamente
+                                <i class="bi bi-check-circle-fill me-1"></i> Guardado
                             </span>
                         </div>
 
