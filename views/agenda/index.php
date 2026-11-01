@@ -52,13 +52,13 @@
                     </button>
                 </div>
 
-                <!-- Botones de Acción: Filtrar y + Agendar Cita -->
+                <!-- Botones de Acción: Filtrar y Agendar Cita (Solo Iconos) -->
                 <div class="col-xl-4 col-lg-3 col-md-12 text-md-end d-flex justify-content-md-end justify-content-start gap-2">
-                    <button type="button" class="btn btn-outline-primary fw-bold shadow-sm px-3" id="btn-toggle-filtros" onclick="toggleFiltrosAgenda()" title="Mostrar u ocultar filtros y métricas">
-                        <i class="bi bi-funnel me-1"></i> Filtrar
+                    <button type="button" class="btn btn-outline-primary shadow-sm" id="btn-toggle-filtros" onclick="toggleFiltrosAgenda()" title="Mostrar u ocultar filtros" aria-label="Filtrar">
+                        <i class="bi bi-funnel"></i>
                     </button>
-                    <button type="button" class="btn btn-success fw-bold shadow-sm px-3" onclick="abrirModalNuevoAgendamiento()">
-                        <i class="bi bi-calendar-plus me-1"></i> + Agendar Cita
+                    <button type="button" class="btn btn-success shadow-sm" onclick="abrirModalNuevoAgendamiento()" title="Agendar nueva cita" aria-label="Agendar Cita">
+                        <i class="bi bi-calendar-plus"></i>
                     </button>
                 </div>
 
