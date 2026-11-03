@@ -61,7 +61,7 @@ $stmtEmp = $pdo->prepare("
     INNER JOIN pacientes p ON p.id = c.paciente_id
     INNER JOIN medicos m ON m.id = c.medico_id
     WHERE c.tipo = 'Empleado' 
-      AND c.estado IN ('Pagado', 'Facturado')
+      AND c.estado IN ('Pagado', 'Facturado', 'Atendido', 'Completado')
       AND c.fecha BETWEEN :fini AND :ffin
     ORDER BY c.fecha ASC, c.hora ASC
 ");
@@ -75,7 +75,7 @@ $stmtFam = $pdo->prepare("
     INNER JOIN pacientes p ON p.id = c.paciente_id
     INNER JOIN medicos m ON m.id = c.medico_id
     WHERE c.tipo = 'Familiar' 
-      AND c.estado IN ('Pagado', 'Facturado')
+      AND c.estado IN ('Pagado', 'Facturado', 'Atendido', 'Completado')
       AND c.fecha BETWEEN :fini AND :ffin
     ORDER BY c.fecha ASC, c.hora ASC
 ");
@@ -89,7 +89,7 @@ $stmtPart = $pdo->prepare("
     INNER JOIN pacientes p ON p.id = c.paciente_id
     INNER JOIN medicos m ON m.id = c.medico_id
     WHERE c.tipo = 'Participante' 
-      AND c.estado IN ('Pagado', 'Facturado')
+      AND c.estado IN ('Pagado', 'Facturado', 'Atendido', 'Completado')
       AND c.fecha BETWEEN :fini AND :ffin
     ORDER BY c.fecha ASC, c.hora ASC
 ");
@@ -103,7 +103,7 @@ $stmtExon = $pdo->prepare("
     INNER JOIN pacientes p ON p.id = c.paciente_id
     INNER JOIN medicos m ON m.id = c.medico_id
     WHERE c.tipo IN ('Exonerado ADH', 'Exonerado Doctor')
-      AND c.estado IN ('Pagado', 'Facturado')
+      AND c.estado IN ('Pagado', 'Facturado', 'Atendido', 'Completado')
       AND c.fecha BETWEEN :fini AND :ffin
     ORDER BY c.fecha ASC, c.hora ASC
 ");

@@ -133,16 +133,20 @@ El análisis de las fórmulas de las columnas `AE` a `AL` del Excel original rev
 
 ---
 
-## 8. Generación y Exportación de Reportes en PDF (Liquidación Médica)
+## 8. Generación y Exportación de Reportes en PDF (Liquidación Consolidada y Beneficios)
 * **Generador Nativo:** Integración local de **FPDF** en `assets/vendor/fpdf/fpdf.php` para generar archivos binarios `.pdf` ultra rápidos (<50ms) sin depender de librerías externas pesadas ni de internet (100% offline).
-* **Orientación Horizontal (Landscape):** Diseñado en formato apaisado (Letter horizontal: 279.4 × 215.9 mm) con márgenes de 10 mm y ancho útil de 259.4 mm, permitiendo que las 8 columnas numéricas y de texto quepan holgadamente sin desbordar ni cortarse.
-* **Diseño Ejecutivo Simplificado:**
-  * Logotipo oficial CMCO en la esquina superior izquierda con separación vertical calibrada (`SetY(32)` / `margin-top: 20px`) para garantizar que la tabla nunca toque ni pise el logo.
-  * Título conciso: **`Mes de [Mes] de [Año]`** (ej: *Mes de Octubre de 2026*).
-  * Directamente la tabla de datos con cabeceras en azul petróleo (`#4f90a5`), filas alternadas (`#f8f9fa`) y fila de totales destacada (`#1d4353`).
-  * Sin textos ruidosos ni explicaciones operativas extensas ("Liquidación de honorarios...", "Cálculo de...", etc.).
+* **Orientación Horizontal (Landscape):** Diseñado en formato apaisado (Letter horizontal: 279.4 × 215.9 mm) con márgenes de 10 mm y ancho útil de 259.4 mm, permitiendo que las columnas numéricas y de texto quepan holgadamente sin desbordar ni cortarse.
+* **Liquidación Mensual Consolidada Integral (`api/liquidacion_pdf.php`):**
+  * **Sección 1 (Honorarios Médicos):** Desglose completo de cada especialista (Total Citas, Citas Pagadas, Total Bruto, Monto Cobrado, Monto ADH y Monto Médico) con cabeceras en azul corporativo (`#4f90a5`) y fila de totales destacada (`#1d4353`).
+  * **Sección 2 (Auditoría de Beneficios Sociales y Exoneraciones):** En página independiente, 4 tablas detalladas:
+    1. *Empleados del Mes* (Beneficio 100% exonerado).
+    2. *Familiares Directos 50%* (con desglose de precio base y 50% efectivamente cobrado en caja).
+    3. *Participantes ADH* (beneficio financiado por la institución).
+    4. *Exoneraciones Especiales* (Exonerado ADH y Exonerado Doctor).
+  * **Balance y Conciliación Final:** Doble tarjeta ejecutiva que resume el impacto social (consultas beneficiadas y valoración) frente a la conciliación financiera (recaudación en caja, honorarios liquidados y margen institucional neto ADH).
+  * **Gestión Dinámica de Cabeceras:** El generador FPDF detecta la tabla en curso si ocurre un salto de página por volumen de datos, reimprimiendo automáticamente la cabecera correspondiente para máxima legibilidad.
 * **Acceso Dual:**
-  1. **Botón "Imprimir / Exportar PDF":** Abre directamente `api/liquidacion_pdf.php?mes=YYYY-MM` en una pestaña nueva con el archivo `.pdf` listo para descargar o imprimir con el visor nativo.
+  1. **Botón "Exportar a PDF (Liquidación Mensual)":** Abre directamente `api/liquidacion_pdf.php?mes=YYYY-MM` en una pestaña nueva con el archivo `.pdf` consolidado.
   2. **Impresión Web (@media print):** Reglas CSS con `@page { size: landscape; margin: 1cm; }` que ocultan navbar, footer y selectores, mostrando un membrete limpio con el mes seleccionado.
 
 ---
