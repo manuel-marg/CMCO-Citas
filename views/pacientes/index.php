@@ -41,7 +41,7 @@
                                 <th>Teléfono</th>
                                 <th>Representante</th>
                                 <th>Tipo / Rol</th>
-                                <th class="text-center">Historial</th>
+                                <th class="text-center" style="width: 175px;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tbody_pacientes_directorio">
@@ -119,7 +119,10 @@
                     </table>
                 </div>
             </div>
-            <div class="modal-footer bg-light">
+            <div class="modal-footer bg-light d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-outline-primary" id="btn_editar_desde_historial" onclick="editarPacienteDesdeHistorial()">
+                    <i class="bi bi-pencil-square me-1"></i> Editar Paciente
+                </button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
@@ -173,7 +176,9 @@
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary fw-bold px-4">Guardar</button>
+                    <button type="submit" class="btn btn-primary fw-bold px-4" id="pac_form_btn_submit">
+                        <i class="bi bi-save me-1"></i> Guardar
+                    </button>
                 </div>
             </form>
         </div>

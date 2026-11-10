@@ -1976,8 +1976,11 @@ async function cargarDirectorioPacientes() {
                         <td>${p.telefono ? `<i class="bi bi-telephone text-muted me-1"></i>${p.telefono}` : '<span class="text-muted">-</span>'}</td>
                         <td class="small">${p.representante || '<span class="text-muted">-</span>'}</td>
                         <td><span class="badge ${tipoBadgeClass}">${p.tipo_beneficio || 'Particular'}</span></td>
-                        <td class="text-center">
-                            <button class="btn btn-sm btn-outline-primary py-0" onclick="verHistorialPaciente(${p.id})">
+                        <td class="text-center text-nowrap">
+                            <button class="btn btn-sm btn-outline-primary py-0 me-1" title="Editar paciente" onclick="editarPaciente(${p.id})">
+                                <i class="bi bi-pencil-square"></i> Editar
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary py-0" title="Ver historial de citas" onclick="verHistorialPaciente(${p.id})">
                                 <i class="bi bi-clock-history"></i> Historial
                             </button>
                         </td>
@@ -2086,8 +2089,11 @@ function renderPaginacionPacientes(totalGeneral, totalFiltrados, page, pages, li
     ulEl.innerHTML = pagHtml;
 }
 
+let pacienteHistorialActualId = null;
+
 async function verHistorialPaciente(pacienteId) {
     try {
+        pacienteHistorialActualId = pacienteId;
         const res = await fetch(`api/pacientes.php?id=${pacienteId}`);
         const json = await res.json();
         if (json.success && json.data) {
@@ -2118,7 +2124,8 @@ async function verHistorialPaciente(pacienteId) {
                 tbody.innerHTML = html;
             }
 
-            const modal = new bootstrap.Modal(document.getElementById('modalHistorialPaciente'));
+            const modalEl = document.getElementById('modalHistorialPaciente');
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
             modal.show();
         }
     } catch (e) {
@@ -2126,11 +2133,68 @@ async function verHistorialPaciente(pacienteId) {
     }
 }
 
+function editarPacienteDesdeHistorial() {
+    if (!pacienteHistorialActualId) return;
+    const modalHistEl = document.getElementById('modalHistorialPaciente');
+    const modalHist = bootstrap.Modal.getInstance(modalHistEl);
+    if (modalHist) {
+        modalHist.hide();
+    }
+    editarPaciente(pacienteHistorialActualId);
+}
+
+function editarPacienteDesdeCita() {
+    if (!AppState.citaSeleccionada || !AppState.citaSeleccionada.paciente_id) return;
+    const modalEstadoEl = document.getElementById('modalEstado');
+    const modalEstado = bootstrap.Modal.getInstance(modalEstadoEl);
+    if (modalEstado) {
+        modalEstado.hide();
+    }
+    editarPaciente(AppState.citaSeleccionada.paciente_id);
+}
+
 function abrirModalNuevoPaciente() {
     document.getElementById('formPacienteDirectorio').reset();
     document.getElementById('pac_form_id').value = '';
-    const modal = new bootstrap.Modal(document.getElementById('modalPacienteForm'));
+    const title = document.getElementById('pac_form_title');
+    if (title) title.innerHTML = '<i class="bi bi-person-plus me-1"></i> Registrar Paciente';
+    const btnSubmit = document.getElementById('pac_form_btn_submit');
+    if (btnSubmit) btnSubmit.innerHTML = '<i class="bi bi-save me-1"></i> Guardar';
+
+    const modalEl = document.getElementById('modalPacienteForm');
+    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
     modal.show();
+}
+
+async function editarPaciente(pacienteId) {
+    try {
+        const res = await fetch(`api/pacientes.php?id=${pacienteId}`);
+        const json = await res.json();
+        if (json.success && json.data) {
+            const p = json.data;
+            document.getElementById('pac_form_id').value = p.id;
+            document.getElementById('pac_form_nombre').value = p.nombre || '';
+            document.getElementById('pac_form_cedula').value = p.cedula || '';
+            document.getElementById('pac_form_telefono').value = p.telefono || '';
+            document.getElementById('pac_form_representante').value = p.representante || '';
+            document.getElementById('pac_form_tipo_beneficio').value = p.tipo_beneficio || 'Particular';
+            document.getElementById('pac_form_observaciones').value = p.observaciones || '';
+
+            const title = document.getElementById('pac_form_title');
+            if (title) title.innerHTML = '<i class="bi bi-pencil-square me-1"></i> Editar Paciente';
+            const btnSubmit = document.getElementById('pac_form_btn_submit');
+            if (btnSubmit) btnSubmit.innerHTML = '<i class="bi bi-check2-circle me-1"></i> Guardar Cambios';
+
+            const modalEl = document.getElementById('modalPacienteForm');
+            const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
+        } else {
+            mostrarToast(json.message || 'Error al obtener datos del paciente', 'danger');
+        }
+    } catch (e) {
+        console.error('Error al editar paciente:', e);
+        mostrarToast('Error al conectar con el servidor', 'danger');
+    }
 }
 
 async function guardarPacienteDirectorio(e) {
@@ -2138,6 +2202,7 @@ async function guardarPacienteDirectorio(e) {
     const form = document.getElementById('formPacienteDirectorio');
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
+    const esEdicion = !!data.id;
 
     try {
         const res = await fetch('api/pacientes.php', {
@@ -2147,9 +2212,36 @@ async function guardarPacienteDirectorio(e) {
         });
         const json = await res.json();
         if (json.success) {
-            bootstrap.Modal.getInstance(document.getElementById('modalPacienteForm')).hide();
-            mostrarToast('Paciente registrado exitosamente');
+            const modalEl = document.getElementById('modalPacienteForm');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            if (modalInstance) modalInstance.hide();
+
+            mostrarToast(esEdicion ? 'Paciente actualizado exitosamente' : 'Paciente registrado exitosamente');
             cargarDirectorioPacientes();
+
+            // Si hay citas cargadas en la vista actual de la agenda, refrescar para reflejar cambios de nombre
+            if (typeof cargarAgendaSegunVista === 'function') {
+                cargarAgendaSegunVista();
+            }
+
+            // Si el modal de estado de cita tenía a este paciente, actualizarlo visualmente
+            const detNombreEl = document.getElementById('det_paciente_nombre');
+            if (detNombreEl && AppState.citaSeleccionada && AppState.citaSeleccionada.paciente_id == data.id) {
+                detNombreEl.innerText = data.nombre;
+                AppState.citaSeleccionada.paciente_nombre = data.nombre;
+                const detCedulaEl = document.getElementById('det_paciente_cedula_tel');
+                if (detCedulaEl) {
+                    detCedulaEl.innerText = `${data.cedula || 'Sin CI'} · ${data.telefono || 'Sin tel'}`;
+                }
+            }
+
+            // Si el modal de historial estaba abierto con este paciente, actualizarlo
+            if (pacienteHistorialActualId == data.id) {
+                const modalHistEl = document.getElementById('modalHistorialPaciente');
+                if (modalHistEl && modalHistEl.classList.contains('show')) {
+                    verHistorialPaciente(data.id);
+                }
+            }
         } else {
             mostrarToast(json.message || 'Error al guardar paciente', 'danger');
         }

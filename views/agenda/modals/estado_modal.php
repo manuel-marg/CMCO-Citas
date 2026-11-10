@@ -17,7 +17,12 @@
                 <div class="p-3 bg-light rounded-3 border mb-3">
                     <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                         <div class="text-truncate">
-                            <h6 class="fw-bold mb-0 text-primary text-truncate" id="det_paciente_nombre">Nombre del Paciente</h6>
+                            <div class="d-flex align-items-center gap-1">
+                                <h6 class="fw-bold mb-0 text-primary text-truncate" id="det_paciente_nombre">Nombre del Paciente</h6>
+                                <button type="button" class="btn btn-link btn-sm text-primary p-0 ms-1" title="Editar paciente" onclick="editarPacienteDesdeCita()">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            </div>
                             <div class="text-muted small" style="font-size: 0.78rem;" id="det_paciente_cedula_tel">C.I / Teléfono</div>
                         </div>
                         <div class="text-end text-nowrap">
