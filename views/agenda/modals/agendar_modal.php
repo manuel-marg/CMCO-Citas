@@ -75,10 +75,11 @@
                     <!-- Médico, Tipo y Precio -->
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label fw-bold">
-                                <i class="bi bi-person-badge text-primary me-1"></i> Médico / Especialista:
+                            <label class="form-label fw-bold d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-person-badge text-primary me-1"></i> Médico / Especialista:</span>
+                                <span id="agendar_medico_color_dot" class="badge rounded-pill border" style="display:none; font-size: 0.72rem;"></span>
                             </label>
-                            <select class="form-select" id="agendar_medico_id" name="medico_id" required>
+                            <select class="form-select" id="agendar_medico_id" name="medico_id" onchange="actualizarPreviewColorMedicoAgendar()" required>
                                 <!-- Se llena dinámicamente -->
                             </select>
                         </div>

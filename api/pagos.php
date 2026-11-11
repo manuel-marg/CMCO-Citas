@@ -12,6 +12,9 @@ if ($method === 'POST') {
     $estado_final = trim($input['estado_final'] ?? 'Pagado'); // 'Pagado' o 'Facturado'
     $factura_o_empleado = trim($input['factura_o_empleado'] ?? '') ?: null;
     $tasa_bcv = (float)($input['tasa_bcv'] ?? 888.8909);
+    $adicional_concepto = array_key_exists('adicional_concepto', $input) ? (trim($input['adicional_concepto'] ?? '') ?: null) : null;
+    $adicional_monto = max(0.0, (float)($input['adicional_monto'] ?? 0.0));
+    $costo_laboratorio = max(0.0, (float)($input['costo_laboratorio'] ?? 0.0));
 
     if ($cita_id <= 0) {
         sendJsonResponse(false, null, 'ID de cita no válido', 400);
@@ -60,19 +63,25 @@ if ($method === 'POST') {
             ]);
         }
 
-        // Actualizar la cita con el nuevo estado, tasa y comprobante
+        // Actualizar la cita con el nuevo estado, tasa, comprobante y adicionales
         $upCita = $pdo->prepare("
             UPDATE citas
             SET estado = :estado,
                 tasa_bcv_aplicada = :tasa,
-                factura_o_empleado = :fac
+                factura_o_empleado = :fac,
+                adicional_concepto = :adic_conc,
+                adicional_monto = :adic_monto,
+                costo_laboratorio = :costo_lab
             WHERE id = :id
         ");
         $upCita->execute([
-            ':estado' => $estado_final,
-            ':tasa'   => $tasa_bcv,
-            ':fac'    => $factura_o_empleado,
-            ':id'     => $cita_id
+            ':estado'     => $estado_final,
+            ':tasa'       => $tasa_bcv,
+            ':fac'        => $factura_o_empleado,
+            ':adic_conc'  => $adicional_concepto,
+            ':adic_monto' => $adicional_monto,
+            ':costo_lab'  => $costo_laboratorio,
+            ':id'         => $cita_id
         ]);
 
         $pdo->commit();

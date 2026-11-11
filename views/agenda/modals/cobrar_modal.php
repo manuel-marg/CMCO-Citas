@@ -29,6 +29,55 @@
                         </div>
                     </div>
 
+                    <!-- Sección de Procedimientos / Insumos Adicionales (Rayos X, Férulas, etc.) -->
+                    <div class="card mb-3 border-secondary-subtle shadow-sm">
+                        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="checkAdicionales" onchange="toggleAdicionalesCobro()">
+                                <label class="form-check-label fw-bold small text-dark" for="checkAdicionales">
+                                    <i class="bi bi-plus-circle me-1 text-primary"></i> Procedimiento o Insumo Adicional (Rayos X, Férula, etc.)
+                                </label>
+                            </div>
+                            <span id="badge_adicional_activo" class="badge bg-primary-subtle text-primary border border-primary-subtle d-none">
+                                Con Adicional
+                            </span>
+                        </div>
+                        <div id="container_adicionales" class="card-body p-3 bg-light-subtle d-none border-top">
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-muted mb-1">Concepto del Adicional:</label>
+                                    <input type="text" class="form-control form-control-sm" id="cobrar_adicional_concepto" name="adicional_concepto" placeholder="Ej: Rayos X, Férula de descarga, etc.">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted mb-1">Monto a Cobrar ($):</label>
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm fw-bold text-success" id="cobrar_adicional_monto" name="adicional_monto" value="0.00" oninput="recalcularConversionCobro()">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small fw-bold text-muted mb-1">Laboratorio / Insumo ($):</label>
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm text-secondary" id="cobrar_costo_laboratorio" name="costo_laboratorio" value="0.00" oninput="recalcularConversionCobro()" title="Deducción de insumos de terceros antes de repartir">
+                                </div>
+                            </div>
+
+                            <!-- Desglose automático del adicional -->
+                            <div class="p-2 rounded-2 bg-white border small">
+                                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                                    <div>
+                                        <span class="text-muted">Laboratorio:</span> <strong id="dsp_adic_lab">$0.00</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-muted">Neto a Repartir:</span> <strong id="dsp_adic_neto" class="text-primary">$0.00</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-muted">↳ Especialista (<span id="dsp_adic_pct_med">50%</span>):</span> <strong id="dsp_adic_med" class="text-success">$0.00</strong>
+                                    </div>
+                                    <div>
+                                        <span class="text-muted">↳ Centro ADH:</span> <strong id="dsp_adic_adh" class="text-info">$0.00</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Configuración de Tasa de Cobro -->
                     <div class="row g-2 mb-3 align-items-center">
                         <div class="col-auto">

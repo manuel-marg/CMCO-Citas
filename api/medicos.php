@@ -59,6 +59,7 @@ if ($method === 'GET') {
             m.id,
             m.nombre,
             m.especialidad,
+            m.color,
             m.telefono,
             m.porcentaje_honorario,
             m.activo,
@@ -147,6 +148,7 @@ if ($method === 'POST') {
     // Registrar o Editar Médico
     $nombre = trim($input['nombre'] ?? '');
     $especialidad = trim($input['especialidad'] ?? 'Medicina General');
+    $color = trim($input['color'] ?? '') ?: '#4f90a5';
     $telefono = trim($input['telefono'] ?? '') ?: null;
     $porcentaje = isset($input['porcentaje_honorario']) ? (float)$input['porcentaje_honorario'] : 50.00;
     $id = isset($input['id']) ? (int)$input['id'] : 0;
@@ -176,6 +178,7 @@ if ($method === 'POST') {
             UPDATE medicos
             SET nombre = :nombre,
                 especialidad = :especialidad,
+                color = :color,
                 telefono = :telefono,
                 porcentaje_honorario = :porcentaje
             WHERE id = :id
@@ -183,26 +186,28 @@ if ($method === 'POST') {
         $stmt->execute([
             ':nombre'       => $nombre,
             ':especialidad' => $especialidad,
+            ':color'        => $color,
             ':telefono'     => $telefono,
             ':porcentaje'   => $porcentaje,
             ':id'           => $id
         ]);
 
-        sendJsonResponse(true, ['id' => $id, 'nombre' => $nombre], 'Médico actualizado exitosamente');
+        sendJsonResponse(true, ['id' => $id, 'nombre' => $nombre, 'color' => $color], 'Médico actualizado exitosamente');
     } else {
         // Registrar nuevo
         $stmt = $pdo->prepare("
-            INSERT INTO medicos (nombre, especialidad, telefono, porcentaje_honorario, activo)
-            VALUES (:nombre, :especialidad, :telefono, :porcentaje, 1)
+            INSERT INTO medicos (nombre, especialidad, color, telefono, porcentaje_honorario, activo)
+            VALUES (:nombre, :especialidad, :color, :telefono, :porcentaje, 1)
         ");
         $stmt->execute([
             ':nombre'       => $nombre,
             ':especialidad' => $especialidad,
+            ':color'        => $color,
             ':telefono'     => $telefono,
             ':porcentaje'   => $porcentaje
         ]);
 
         $newId = (int)$pdo->lastInsertId();
-        sendJsonResponse(true, ['id' => $newId, 'nombre' => $nombre], 'Médico registrado exitosamente', 201);
+        sendJsonResponse(true, ['id' => $newId, 'nombre' => $nombre, 'color' => $color], 'Médico registrado exitosamente', 201);
     }
 }

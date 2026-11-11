@@ -52,8 +52,9 @@
 
                         <!-- Selector de Médico -->
                         <div class="mb-2">
-                            <label for="det_medico_id" class="form-label mb-1 text-secondary fw-semibold small" style="font-size: 0.76rem;">
-                                <i class="bi bi-person-badge text-primary me-1"></i> Médico / Especialista:
+                            <label for="det_medico_id" class="form-label mb-1 text-secondary fw-semibold small d-flex justify-content-between align-items-center" style="font-size: 0.76rem;">
+                                <span><i class="bi bi-person-badge text-primary me-1"></i> Médico / Especialista:</span>
+                                <span id="det_medico_color_dot" class="badge rounded-pill border" style="display:none; font-size: 0.72rem;"></span>
                             </label>
                             <select class="form-select form-select-sm fw-bold border-secondary-subtle" id="det_medico_id" onchange="manejarCambioMedicoCita()">
                                 <!-- Se llena dinámicamente -->
@@ -105,6 +106,18 @@
                     
                     <div id="det_representante_box" class="pt-1 mt-1 border-top small text-truncate d-none" style="font-size: 0.78rem;">
                         <i class="bi bi-people me-1 text-muted"></i><strong>Representante:</strong> <span id="det_representante" class="text-dark"></span>
+                    </div>
+
+                    <div id="det_adicional_box" class="pt-1 mt-1 border-top small d-none" style="font-size: 0.78rem;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-primary fw-semibold">
+                                <i class="bi bi-plus-circle me-1"></i><span id="det_adicional_concepto">Adicional</span>:
+                            </span>
+                            <span class="fw-bold text-success" id="det_adicional_monto">$0.00</span>
+                        </div>
+                        <div id="det_laboratorio_line" class="text-muted d-none" style="font-size: 0.72rem;">
+                            Deducción laboratorio: <span id="det_laboratorio_monto">$0.00</span>
+                        </div>
                     </div>
 
                     <div id="det_pagos_box" class="pt-1 mt-1 border-top small d-none" style="font-size: 0.78rem;">

@@ -19,6 +19,8 @@ if ($method === 'GET') {
                 p.tipo_beneficio AS paciente_tipo_beneficio,
                 m.nombre AS medico_nombre,
                 m.especialidad AS medico_especialidad,
+                m.color AS medico_color,
+                m.porcentaje_honorario AS medico_porcentaje_honorario,
                 cons.nombre AS consultorio_nombre,
                 cons.numero AS consultorio_numero
             FROM citas c
@@ -78,6 +80,7 @@ if ($method === 'GET') {
             p.tipo_beneficio AS paciente_tipo_beneficio,
             m.nombre AS medico_nombre,
             m.especialidad AS medico_especialidad,
+            m.color AS medico_color,
             cons.nombre AS consultorio_nombre,
             cons.numero AS consultorio_numero
         FROM citas c
@@ -273,21 +276,28 @@ if ($method === 'POST') {
         $estado = isset($input['estado']) && array_key_exists($input['estado'], ESTADOS_CITAS) ? trim($input['estado']) : $citaActual['estado'];
         $observaciones = array_key_exists('observaciones', $input) ? (trim($input['observaciones'] ?? '') ?: null) : $citaActual['observaciones'];
         $motivo = array_key_exists('motivo_consulta', $input) ? (trim($input['motivo_consulta'] ?? '') ?: null) : $citaActual['motivo_consulta'];
+        $adicional_concepto = array_key_exists('adicional_concepto', $input) ? (trim($input['adicional_concepto'] ?? '') ?: null) : ($citaActual['adicional_concepto'] ?? null);
+        $adicional_monto = array_key_exists('adicional_monto', $input) ? max(0.0, (float)$input['adicional_monto']) : (float)($citaActual['adicional_monto'] ?? 0.0);
+        $costo_laboratorio = array_key_exists('costo_laboratorio', $input) ? max(0.0, (float)$input['costo_laboratorio']) : (float)($citaActual['costo_laboratorio'] ?? 0.0);
 
         $stmt = $pdo->prepare("
             UPDATE citas
             SET medico_id = :med_id, tipo = :tipo, precio_usd = :precio, estado = :estado,
-                observaciones = :obs, motivo_consulta = :motivo
+                observaciones = :obs, motivo_consulta = :motivo,
+                adicional_concepto = :adic_conc, adicional_monto = :adic_monto, costo_laboratorio = :costo_lab
             WHERE id = :id
         ");
         $stmt->execute([
-            ':med_id' => $medico_id,
-            ':tipo'   => $tipo,
-            ':precio' => $precio_usd,
-            ':estado' => $estado,
-            ':obs'    => $observaciones,
-            ':motivo' => $motivo,
-            ':id'     => $cita_id
+            ':med_id'     => $medico_id,
+            ':tipo'       => $tipo,
+            ':precio'     => $precio_usd,
+            ':estado'     => $estado,
+            ':obs'        => $observaciones,
+            ':motivo'     => $motivo,
+            ':adic_conc'  => $adicional_concepto,
+            ':adic_monto' => $adicional_monto,
+            ':costo_lab'  => $costo_laboratorio,
+            ':id'         => $cita_id
         ]);
 
         // Retornar la cita actualizada con información de médico, paciente y consultorio
@@ -301,6 +311,8 @@ if ($method === 'POST') {
                 p.tipo_beneficio AS paciente_tipo_beneficio,
                 m.nombre AS medico_nombre,
                 m.especialidad AS medico_especialidad,
+                m.color AS medico_color,
+                m.porcentaje_honorario AS medico_porcentaje_honorario,
                 cons.nombre AS consultorio_nombre,
                 cons.numero AS consultorio_numero
             FROM citas c

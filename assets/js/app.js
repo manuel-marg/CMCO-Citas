@@ -524,18 +524,27 @@ function renderizarVistaDia() {
                 citasFiltradas.forEach(cita => {
                     const estadoInfo = AppState.estados[cita.estado] || { emoji: '📌', label: cita.estado, badge: 'primary', color: '#4f90a5' };
                     const precio = parseFloat(cita.precio_usd || 0);
+                    const adicMonto = parseFloat(cita.adicional_monto || 0);
+                    let precioTotalVisible = precio;
+                    if (cita.tipo === 'Empleado' || cita.tipo === 'Participante') {
+                        precioTotalVisible = adicMonto;
+                    } else if (adicMonto > 0) {
+                        precioTotalVisible = precio + adicMonto;
+                    }
                     const precioBadgeClass = cita.estado === 'Facturado' ? 'bg-dark' : (cita.estado === 'Pagado' ? 'bg-success' : 'bg-primary');
                     const pagadaPasada = esCitaPasadaPagada(cita, AppState.fechaActual);
 
+                    const medicoColor = cita.medico_color || '#4f90a5';
+
                     html += `
-                        <div class="cita-card mb-1 ${pagadaPasada ? 'cita-pagada-pasada' : ''}" style="border-left-color: ${estadoInfo.color}; cursor: pointer;" onclick="abrirDetalleCita(${cita.id})">
+                        <div class="cita-card mb-1 ${pagadaPasada ? 'cita-pagada-pasada' : ''}" style="border-left-color: ${medicoColor} !important; cursor: pointer;" onclick="abrirDetalleCita(${cita.id})">
                             <div>
                                 <div class="d-flex justify-content-between align-items-start mb-1">
                                     <span class="badge bg-${estadoInfo.badge} text-white" style="font-size: 0.72rem;">
                                         ${estadoInfo.emoji} ${estadoInfo.label}
                                     </span>
                                     <span class="cita-precio-badge ${precioBadgeClass} text-white">
-                                        $${precio.toFixed(0)}
+                                        $${precioTotalVisible.toFixed(0)}
                                     </span>
                                 </div>
                                 <div class="cita-paciente text-truncate" title="${cita.paciente_nombre}">
@@ -548,11 +557,18 @@ function renderizarVistaDia() {
                             </div>
                             <div class="mt-2 pt-1 border-top d-flex justify-content-between align-items-center">
                                 <span class="cita-medico text-truncate" title="${cita.medico_nombre}">
-                                    <i class="bi bi-person-fill"></i> ${cita.medico_nombre}
+                                    <i class="bi bi-person-fill" style="color: ${medicoColor};"></i> ${cita.medico_nombre}
                                 </span>
-                                <span class="badge bg-light text-muted border" style="font-size: 0.68rem;">
-                                    ${cita.tipo}
-                                </span>
+                                <div class="d-flex align-items-center gap-1">
+                                    <span class="badge bg-light text-muted border" style="font-size: 0.68rem;">
+                                        ${cita.tipo}
+                                    </span>
+                                    ${adicMonto > 0 ? `
+                                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle" style="font-size: 0.65rem;" title="${cita.adicional_concepto || 'Adicional'}: +$${adicMonto.toFixed(0)}">
+                                            +${cita.adicional_concepto ? acortarNombre(cita.adicional_concepto, 1) : 'Adic'} ($${adicMonto.toFixed(0)})
+                                        </span>
+                                    ` : ''}
+                                </div>
                             </div>
                         </div>
                     `;
@@ -633,9 +649,18 @@ function renderizarVistaSemana() {
                 const badgeConsClass = c.consultorio_id == 1 ? 'badge-c1' : (c.consultorio_id == 2 ? 'badge-c2' : 'badge-c3');
                 const consAbbr = c.consultorio_id == 1 ? 'C1' : (c.consultorio_id == 2 ? 'C2' : 'C3');
                 const pagadaPasada = esCitaPasadaPagada(c, fechaDia);
+                const adicMonto = parseFloat(c.adicional_monto || 0);
+                let precioSemana = parseFloat(c.precio_usd || 0);
+                if (c.tipo === 'Empleado' || c.tipo === 'Participante') {
+                    precioSemana = adicMonto;
+                } else if (adicMonto > 0) {
+                    precioSemana += adicMonto;
+                }
+
+                const medicoColorSemana = c.medico_color || '#4f90a5';
 
                 html += `
-                    <div class="week-cita-item ${pagadaPasada ? 'cita-pagada-pasada' : ''}" style="border-left-color: ${estadoInfo.color};" onclick="abrirDetalleCita(${c.id})">
+                    <div class="week-cita-item ${pagadaPasada ? 'cita-pagada-pasada' : ''}" style="border-left-color: ${medicoColorSemana} !important;" onclick="abrirDetalleCita(${c.id})">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <span class="fw-bold small text-dark">${formatearHora12(c.hora)}</span>
                             <span class="badge ${badgeConsClass}" style="font-size: 0.68rem;" title="${c.consultorio_nombre}">${consAbbr}</span>
@@ -644,11 +669,11 @@ function renderizarVistaSemana() {
                             ${c.paciente_nombre}
                         </div>
                         <div class="small text-muted text-truncate" style="font-size: 0.75rem;">
-                            ${c.medico_nombre}
+                            <i class="bi bi-person-fill me-1" style="color: ${medicoColorSemana};"></i>${c.medico_nombre}
                         </div>
                         <div class="d-flex justify-content-between align-items-center mt-1 pt-1 border-top" style="font-size: 0.72rem;">
                             <span>${estadoInfo.emoji} ${c.estado}</span>
-                            <span class="fw-bold text-success">$${parseFloat(c.precio_usd).toFixed(0)}</span>
+                            <span class="fw-bold text-success">$${precioSemana.toFixed(0)}${adicMonto > 0 ? ` <small class="text-primary fw-normal" title="${c.adicional_concepto || 'Adicional'}">(+${adicMonto.toFixed(0)})</small>` : ''}</span>
                         </div>
                     </div>
                 `;
@@ -779,9 +804,10 @@ function renderizarVistaMes() {
             const nombreCorto = acortarNombre(cita.paciente_nombre, 2);
             const emojiHtml = estadoInfo.emoji ? `<span class="cita-chip-emoji">${estadoInfo.emoji}</span>` : '';
             const pagadaPasada = esCitaPasadaPagada(cita, c.fecha);
+            const medicoColorMes = cita.medico_color || '#4f90a5';
             html += `
                 <div class="cal-cita-chip ${pagadaPasada ? 'cita-pagada-pasada' : ''}" 
-                     style="border-left-color: ${estadoInfo.color}; cursor: pointer;" 
+                     style="border-left-color: ${medicoColorMes} !important; cursor: pointer;" 
                      onclick="event.stopPropagation(); abrirDetalleCita(${cita.id})"
                      title="${formatearHora12(cita.hora)} ${estadoInfo.emoji || ''} ${cita.paciente_nombre} · ${cita.medico_nombre} (${estadoInfo.label || cita.estado}) - Clic para ver y editar">
                     <strong>${formatearHora12(cita.hora)}</strong> ${emojiHtml} ${nombreCorto}
@@ -946,6 +972,7 @@ function abrirModalNuevoAgendamiento(hora = '08:00:00', consultorioId = 1, fecha
     AppState.medicos.forEach(m => {
         selectMed.innerHTML += `<option value="${m.id}">${m.nombre} (${m.especialidad})</option>`;
     });
+    actualizarPreviewColorMedicoAgendar();
 
     document.getElementById('agendar_precio_usd').value = '50.00';
     document.getElementById('agendar_tipo').value = 'Particular';
@@ -1148,6 +1175,7 @@ async function abrirDetalleCita(citaId) {
             }
         }
         selectMed.value = cita.medico_id;
+        actualizarPreviewColorMedicoDetalle();
     }
 
     // Tipo de cita
@@ -1186,6 +1214,29 @@ async function abrirDetalleCita(citaId) {
         repBox.classList.add('d-none');
     }
 
+    // Adicionales (Rayos X, Férulas, etc.)
+    const adicBox = document.getElementById('det_adicional_box');
+    if (adicBox) {
+        const adicMonto = parseFloat(cita.adicional_monto || 0);
+        if (adicMonto > 0 || cita.adicional_concepto) {
+            document.getElementById('det_adicional_concepto').innerText = cita.adicional_concepto || 'Adicional';
+            document.getElementById('det_adicional_monto').innerText = `+$${adicMonto.toFixed(2)}`;
+            const labMonto = parseFloat(cita.costo_laboratorio || 0);
+            const labLine = document.getElementById('det_laboratorio_line');
+            if (labLine) {
+                if (labMonto > 0) {
+                    document.getElementById('det_laboratorio_monto').innerText = `$${labMonto.toFixed(2)}`;
+                    labLine.classList.remove('d-none');
+                } else {
+                    labLine.classList.add('d-none');
+                }
+            }
+            adicBox.classList.remove('d-none');
+        } else {
+            adicBox.classList.add('d-none');
+        }
+    }
+
     // Pagos
     const pagosBox = document.getElementById('det_pagos_box');
     if (cita.pagos && cita.pagos.length > 0) {
@@ -1210,6 +1261,7 @@ async function abrirDetalleCita(citaId) {
 let timerDetalleAutoSave = null;
 
 function manejarCambioMedicoCita() {
+    actualizarPreviewColorMedicoDetalle();
     if (!AppState.citaSeleccionada) return;
     const selectMed = document.getElementById('det_medico_id');
     if (!selectMed) return;
@@ -1476,22 +1528,44 @@ function abrirCobroDesdeDetalle() {
         sForma2.innerHTML += `<option value="${k}">${AppState.formasPago[k]}</option>`;
     });
 
-    // Configurar montos
-    let precio = parseFloat(cita.precio_usd);
-    if (cita.tipo === 'Familiar') precio = precio * 0.5;
-    if (cita.tipo === 'Empleado' || cita.tipo === 'Participante') precio = 0.0;
+    // Guardar referencia de la cita en curso
+    AppState.cobrarCitaActual = cita;
 
-    document.getElementById('cobrar_precio_display').innerText = `$${precio.toFixed(2)}`;
+    // Calcular precio base según tipo de beneficio
+    let basePrecio = parseFloat(cita.precio_usd || 0);
+    if (cita.tipo === 'Familiar') basePrecio = basePrecio * 0.5;
+    if (cita.tipo === 'Empleado' || cita.tipo === 'Participante') basePrecio = 0.0;
+    AppState.cobrarBasePrecio = basePrecio;
+
+    // Obtener porcentaje de honorario del médico
+    const medId = cita.medico_id;
+    const medEncontrado = (AppState.medicos || []).find(m => m.id == medId);
+    AppState.cobrarPctMedico = parseFloat(cita.medico_porcentaje_honorario || medEncontrado?.porcentaje_honorario || 50.0);
+
+    // Precargar campos de adicionales
+    const adicMonto = parseFloat(cita.adicional_monto || 0);
+    const labCosto = parseFloat(cita.costo_laboratorio || 0);
+    const tieneAdic = adicMonto > 0 || !!cita.adicional_concepto;
+
+    const chkAdic = document.getElementById('checkAdicionales');
+    if (chkAdic) chkAdic.checked = tieneAdic;
+    const inpConcepto = document.getElementById('cobrar_adicional_concepto');
+    if (inpConcepto) inpConcepto.value = cita.adicional_concepto || '';
+    const inpMonto = document.getElementById('cobrar_adicional_monto');
+    if (inpMonto) inpMonto.value = adicMonto > 0 ? adicMonto.toFixed(2) : '0.00';
+    const inpLab = document.getElementById('cobrar_costo_laboratorio');
+    if (inpLab) inpLab.value = labCosto > 0 ? labCosto.toFixed(2) : '0.00';
+
+    toggleAdicionalesCobro(false);
+
     document.getElementById('cobrar_tasa_bcv').value = AppState.tasaBcv.toFixed(2);
-    document.getElementById('cobrar_monto_1').value = precio.toFixed(2);
-    document.getElementById('cobrar_monto_2').value = '0.00';
     document.getElementById('cobrar_factura_o_empleado').value = cita.factura_o_empleado || '';
     const selEstadoFinal = document.getElementById('cobrar_estado_final');
     if (selEstadoFinal) {
         selEstadoFinal.value = (cita.estado === 'Facturado' || cita.estado === 'Pagado') ? cita.estado : 'Facturado';
     }
 
-    // Pago mixto off
+    // Pago mixto off por defecto al abrir
     document.getElementById('checkPagoMixto').checked = false;
     document.getElementById('container_pago_2').classList.add('d-none');
 
@@ -1499,6 +1573,27 @@ function abrirCobroDesdeDetalle() {
 
     const modal = new bootstrap.Modal(document.getElementById('modalCobrar'));
     modal.show();
+}
+
+function toggleAdicionalesCobro(resetValues = true) {
+    const chk = document.getElementById('checkAdicionales');
+    const box = document.getElementById('container_adicionales');
+    const badge = document.getElementById('badge_adicional_activo');
+    if (!chk || !box) return;
+
+    if (chk.checked) {
+        box.classList.remove('d-none');
+        if (badge) badge.classList.remove('d-none');
+    } else {
+        box.classList.add('d-none');
+        if (badge) badge.classList.add('d-none');
+        if (resetValues) {
+            document.getElementById('cobrar_adicional_concepto').value = '';
+            document.getElementById('cobrar_adicional_monto').value = '0.00';
+            document.getElementById('cobrar_costo_laboratorio').value = '0.00';
+        }
+    }
+    recalcularConversionCobro();
 }
 
 function togglePagoMixto() {
@@ -1515,6 +1610,64 @@ function togglePagoMixto() {
 
 function recalcularConversionCobro() {
     const tasa = parseFloat(document.getElementById('cobrar_tasa_bcv').value) || AppState.tasaBcv;
+    const chkAdic = document.getElementById('checkAdicionales');
+    const tieneAdic = chkAdic && chkAdic.checked;
+
+    const adicMonto = tieneAdic ? (parseFloat(document.getElementById('cobrar_adicional_monto').value) || 0.0) : 0.0;
+    const labCosto = tieneAdic ? (parseFloat(document.getElementById('cobrar_costo_laboratorio').value) || 0.0) : 0.0;
+
+    // Cálculo de reparto del adicional
+    const pctMed = AppState.cobrarPctMedico !== undefined ? AppState.cobrarPctMedico : 50.0;
+    const netoRepartir = Math.max(0.0, adicMonto - labCosto);
+    const medShare = netoRepartir * (pctMed / 100.0);
+    const adhShare = netoRepartir * ((100.0 - pctMed) / 100.0);
+
+    // Actualizar panel de desglose
+    const elLab = document.getElementById('dsp_adic_lab');
+    if (elLab) elLab.innerText = `$${labCosto.toFixed(2)}`;
+    const elNeto = document.getElementById('dsp_adic_neto');
+    if (elNeto) elNeto.innerText = `$${netoRepartir.toFixed(2)}`;
+    const elMed = document.getElementById('dsp_adic_med');
+    if (elMed) elMed.innerText = `$${medShare.toFixed(2)}`;
+    const elAdh = document.getElementById('dsp_adic_adh');
+    if (elAdh) elAdh.innerText = `$${adhShare.toFixed(2)}`;
+    const elPct = document.getElementById('dsp_adic_pct_med');
+    if (elPct) elPct.innerText = `${pctMed.toFixed(0)}%`;
+
+    // Total a cobrar al paciente en caja ($ USD)
+    const base = AppState.cobrarBasePrecio !== undefined ? AppState.cobrarBasePrecio : 0.0;
+    const totalCobrarUsd = base + adicMonto;
+
+    // Actualizar display de precio
+    const disp = document.getElementById('cobrar_precio_display');
+    if (disp) {
+        disp.innerText = `$${totalCobrarUsd.toFixed(2)}`;
+    }
+
+    // Actualizar texto informativo de encabezado
+    const citaActual = AppState.cobrarCitaActual;
+    const infoAdicEl = document.getElementById('cobrar_info_adicional');
+    if (citaActual && infoAdicEl) {
+        let detalleTexto = `${citaActual.medico_nombre} · ${citaActual.consultorio_nombre} · ${formatearHora12(citaActual.hora)} · Tipo: ${citaActual.tipo}`;
+        if (citaActual.tipo === 'Empleado' || citaActual.tipo === 'Participante') {
+            if (tieneAdic && adicMonto > 0) {
+                detalleTexto += ` (Consulta Base: $0.00 Exonerada + Adicional: $${adicMonto.toFixed(2)})`;
+            } else {
+                detalleTexto += ` (Consulta Base: $0.00 Beneficio 100% Exonerado)`;
+            }
+        } else if (tieneAdic && adicMonto > 0) {
+            detalleTexto += ` (Base: $${base.toFixed(2)} + Adicional: $${adicMonto.toFixed(2)})`;
+        }
+        infoAdicEl.innerText = detalleTexto;
+    }
+
+    // Si no es pago mixto, sincronizar automáticamente monto_1
+    const chkMixto = document.getElementById('checkPagoMixto');
+    if (!chkMixto || !chkMixto.checked) {
+        document.getElementById('cobrar_monto_1').value = totalCobrarUsd.toFixed(2);
+        document.getElementById('cobrar_monto_2').value = '0.00';
+    }
+
     const m1 = parseFloat(document.getElementById('cobrar_monto_1').value) || 0.0;
     const m2 = parseFloat(document.getElementById('cobrar_monto_2').value) || 0.0;
 
@@ -1535,6 +1688,17 @@ async function guardarCobro(e) {
     const form = document.getElementById('formCobrar');
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
+
+    // Asegurar valores numéricos y limpiar si adicionales está deshabilitado
+    const chkAdic = document.getElementById('checkAdicionales');
+    if (!chkAdic || !chkAdic.checked) {
+        data.adicional_concepto = null;
+        data.adicional_monto = 0.0;
+        data.costo_laboratorio = 0.0;
+    } else {
+        data.adicional_monto = parseFloat(data.adicional_monto) || 0.0;
+        data.costo_laboratorio = parseFloat(data.costo_laboratorio) || 0.0;
+    }
 
     try {
         const res = await fetch('api/pagos.php', {
@@ -1745,16 +1909,24 @@ async function verDetalleMedico(medicoId, nombreMedico) {
             }
             let html = '';
             citas.forEach(c => {
+                const adic = parseFloat(c.adicional_monto || 0);
+                const lab = parseFloat(c.costo_laboratorio || 0);
                 html += `
                     <tr>
                         <td>${c.fecha}</td>
                         <td>${formatearHora12(c.hora)}</td>
                         <td>${c.consultorio_nombre}</td>
-                        <td class="text-start ps-2 fw-bold">${c.paciente_nombre}</td>
+                        <td class="text-start ps-2 fw-bold">
+                            ${c.paciente_nombre}
+                            ${adic > 0 ? `<div class="small text-muted fw-normal">+${c.adicional_concepto || 'Adicional'}: <strong class="text-success">$${adic.toFixed(2)}</strong>${lab > 0 ? ` (Lab: -$${lab.toFixed(2)})` : ''}</div>` : ''}
+                        </td>
                         <td>${c.paciente_cedula || '-'}</td>
                         <td><span class="badge bg-light text-dark border">${c.tipo}</span></td>
                         <td><span class="badge bg-secondary">${c.estado}</span></td>
-                        <td class="fw-bold">$${parseFloat(c.precio_usd).toFixed(2)}</td>
+                        <td class="fw-bold">
+                            $${parseFloat(c.precio_usd).toFixed(2)}
+                            ${adic > 0 ? `<div class="small text-success">+Adic: $${adic.toFixed(2)}</div>` : ''}
+                        </td>
                         <td>${c.factura_o_empleado || '-'}</td>
                     </tr>
                 `;
@@ -1801,14 +1973,21 @@ async function cargarBeneficios() {
             } else {
                 let html = '';
                 data.empleados.forEach(c => {
+                    const adic = parseFloat(c.adicional_monto || 0);
                     html += `
                         <tr>
                             <td>${c.fecha}</td>
-                            <td class="text-start ps-3 fw-bold text-primary">${c.paciente_nombre}</td>
+                            <td class="text-start ps-3 fw-bold text-primary">
+                                ${c.paciente_nombre}
+                                ${adic > 0 ? `<div class="small text-muted fw-normal"><i class="bi bi-plus-circle text-primary me-1"></i>${c.adicional_concepto || 'Adicional'}: <strong>+$${adic.toFixed(2)}</strong> (Cobrado en caja)</div>` : ''}
+                            </td>
                             <td>${c.cedula || '-'}</td>
                             <td>${c.telefono || '-'}</td>
                             <td>${c.medico_nombre}</td>
-                            <td class="fw-bold">$${parseFloat(c.precio_usd).toFixed(2)}</td>
+                            <td class="fw-bold">
+                                $${parseFloat(c.precio_usd).toFixed(2)}
+                                <div class="text-success small fw-normal">Base Exonerada 100%</div>
+                            </td>
                             <td><span class="badge bg-success">${c.estado}</span></td>
                         </tr>
                     `;
@@ -2257,6 +2436,176 @@ async function guardarPacienteDirectorio(e) {
  */
 let debounceBuscarMedicos = null;
 
+// Paleta histórica del sistema anterior (Google Sheets)
+const PALETA_COLORES_SISTEMA_ANTERIOR = [
+    { color: '#e6e6e6', nombre: 'Dra. Rosanny García', desc: 'Gris Claro' },
+    { color: '#ffcbc1', nombre: 'Dra. Maribel Guilarte', desc: 'Rosa Salmón' },
+    { color: '#f9cb9c', nombre: 'Dra. Lyl Belisario', desc: 'Naranja Suave' },
+    { color: '#ffe699', nombre: 'Dra. Ma.Auxiliadora Aguilera', desc: 'Amarillo Pastel' },
+    { color: '#d0edb7', nombre: 'Dr. Jorge Valeri', desc: 'Verde Suave' },
+    { color: '#cfe2f3', nombre: 'Dr. José Francisco', desc: 'Azul Claro' },
+    { color: '#c1dce3', nombre: 'Dra. Mónica Porras', desc: 'Celeste' },
+    { color: '#e6cbf4', nombre: 'Dra. Conchita Sánchez', desc: 'Lavanda' },
+    { color: '#3c3c3c', nombre: 'Dr. Carlos Eduardo Márquez', desc: 'Gris Grafito' },
+    { color: '#b90602', nombre: 'Odo. Geraldine Cabrera', desc: 'Rojo Carmesí' },
+    { color: '#784516', nombre: 'Luzmir Fagúndez', desc: 'Marrón' },
+    { color: '#7f6000', nombre: 'Dra. Mariana Morales', desc: 'Ocre Dorado' },
+    { color: '#0f714a', nombre: 'Laboratorio / Unimedlab', desc: 'Verde Esmeralda' },
+    { color: '#175b68', nombre: 'Dra. Evelyn Tranchino', desc: 'Teal Petróleo' },
+    { color: '#674ea7', nombre: 'Dra. Elisa Villasmil', desc: 'Púrpura' },
+    { color: '#0b5394', nombre: 'Dra. Elisa Izquierdo', desc: 'Azul Marino' },
+    { color: '#f8b3a3', nombre: 'Dra. Gabriela Berbis', desc: 'Melocotón' },
+    { color: '#ffe5b8', nombre: 'Dra. Gerlly Mendoza', desc: 'Crema Durazno' }
+];
+
+// Paleta de colores adicionales sugeridos
+const PALETA_COLORES_ADICIONALES = [
+    { color: '#4f90a5', nombre: 'Azul CMCO (Por defecto)' },
+    { color: '#0d6efd', nombre: 'Azul Eléctrico' },
+    { color: '#0dcaf0', nombre: 'Cian Turquesa' },
+    { color: '#198754', nombre: 'Verde Intenso' },
+    { color: '#20c997', nombre: 'Verde Menta' },
+    { color: '#059669', nombre: 'Esmeralda Oscuro' },
+    { color: '#ffc107', nombre: 'Ámbar Cálido' },
+    { color: '#fd7e14', nombre: 'Naranja Vivo' },
+    { color: '#dc3545', nombre: 'Rojo Pasión' },
+    { color: '#e11d48', nombre: 'Frambuesa' },
+    { color: '#d63384', nombre: 'Rosa Fucsia' },
+    { color: '#6f42c1', nombre: 'Púrpura Índigo' },
+    { color: '#6610f2', nombre: 'Índigo Real' },
+    { color: '#0284c7', nombre: 'Azul Cielo' },
+    { color: '#6c757d', nombre: 'Gris Neutro' },
+    { color: '#1e293b', nombre: 'Azul Noche' }
+];
+
+function obtenerColorTextoParaFondo(hex) {
+    if (!hex) return '#FFFFFF';
+    const c = hex.replace('#', '');
+    if (c.length !== 6) return '#FFFFFF';
+    const r = parseInt(c.substring(0, 2), 16) || 0;
+    const g = parseInt(c.substring(2, 4), 16) || 0;
+    const b = parseInt(c.substring(4, 6), 16) || 0;
+    const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
+    return (yiq >= 155) ? '#212529' : '#FFFFFF';
+}
+
+function setMedicoFormColor(hex) {
+    if (!hex) hex = '#4f90a5';
+    const picker = document.getElementById('medico_form_color');
+    const inputHex = document.getElementById('medico_form_color_hex');
+    const badge = document.getElementById('preview_color_badge');
+
+    if (picker) picker.value = hex;
+    if (inputHex) inputHex.value = hex.toUpperCase();
+    if (badge) {
+        badge.style.backgroundColor = hex;
+        badge.style.color = obtenerColorTextoParaFondo(hex);
+        badge.textContent = hex.toUpperCase();
+    }
+    renderizarPaletasColores();
+}
+
+function actualizarPreviewColorMedico(hex) {
+    if (!hex || !hex.startsWith('#')) return;
+    const inputHex = document.getElementById('medico_form_color_hex');
+    const badge = document.getElementById('preview_color_badge');
+    if (inputHex) inputHex.value = hex.toUpperCase();
+    if (badge) {
+        badge.style.backgroundColor = hex;
+        badge.style.color = obtenerColorTextoParaFondo(hex);
+        badge.textContent = hex.toUpperCase();
+    }
+    renderizarPaletasColores();
+}
+
+function actualizarColorDesdeInputHex(text) {
+    let clean = (text || '').trim();
+    if (!clean.startsWith('#')) clean = '#' + clean;
+    if (/^#[0-9A-Fa-f]{6}$/.test(clean)) {
+        const picker = document.getElementById('medico_form_color');
+        if (picker) picker.value = clean;
+        actualizarPreviewColorMedico(clean);
+    }
+}
+
+function renderizarPaletasColores() {
+    const contAnteriores = document.getElementById('paleta_colores_anteriores');
+    const contAdicionales = document.getElementById('paleta_colores_adicionales');
+    const picker = document.getElementById('medico_form_color');
+    const colorActual = (picker ? picker.value : '#4f90a5').toLowerCase();
+
+    if (contAnteriores) {
+        let html = '';
+        PALETA_COLORES_SISTEMA_ANTERIOR.forEach(item => {
+            const isSelected = item.color.toLowerCase() === colorActual;
+            const textColor = obtenerColorTextoParaFondo(item.color);
+            html += `
+                <button type="button" 
+                        class="btn-swatch-color rounded-circle border shadow-xs d-inline-flex align-items-center justify-content-center" 
+                        style="width: 26px; height: 26px; background-color: ${item.color}; cursor: pointer; padding: 0; outline: ${isSelected ? '2px solid #0d6efd' : 'none'}; outline-offset: 2px;" 
+                        title="${item.nombre} (${item.desc} · ${item.color.toUpperCase()})"
+                        onclick="setMedicoFormColor('${item.color}')">
+                    ${isSelected ? `<i class="bi bi-check" style="color: ${textColor}; font-size: 0.95rem; font-weight: 900; line-height: 1;"></i>` : ''}
+                </button>
+            `;
+        });
+        contAnteriores.innerHTML = html;
+    }
+
+    if (contAdicionales) {
+        let html = '';
+        PALETA_COLORES_ADICIONALES.forEach(item => {
+            const isSelected = item.color.toLowerCase() === colorActual;
+            const textColor = obtenerColorTextoParaFondo(item.color);
+            html += `
+                <button type="button" 
+                        class="btn-swatch-color rounded-circle border shadow-xs d-inline-flex align-items-center justify-content-center" 
+                        style="width: 26px; height: 26px; background-color: ${item.color}; cursor: pointer; padding: 0; outline: ${isSelected ? '2px solid #0d6efd' : 'none'}; outline-offset: 2px;" 
+                        title="${item.nombre} (${item.color.toUpperCase()})"
+                        onclick="setMedicoFormColor('${item.color}')">
+                    ${isSelected ? `<i class="bi bi-check" style="color: ${textColor}; font-size: 0.95rem; font-weight: 900; line-height: 1;"></i>` : ''}
+                </button>
+            `;
+        });
+        contAdicionales.innerHTML = html;
+    }
+}
+
+function actualizarPreviewColorMedicoAgendar() {
+    const sel = document.getElementById('agendar_medico_id');
+    const dot = document.getElementById('agendar_medico_color_dot');
+    if (!sel || !dot) return;
+    const medId = parseInt(sel.value);
+    const medico = (AppState.medicos || []).find(m => m.id == medId);
+    if (medico && medico.color) {
+        dot.style.display = 'inline-flex';
+        dot.style.alignItems = 'center';
+        dot.style.backgroundColor = medico.color;
+        dot.style.color = obtenerColorTextoParaFondo(medico.color);
+        dot.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:currentColor; margin-right:4px;"></span>${medico.color.toUpperCase()}`;
+    } else {
+        dot.style.display = 'none';
+    }
+}
+
+function actualizarPreviewColorMedicoDetalle() {
+    const sel = document.getElementById('det_medico_id');
+    const dot = document.getElementById('det_medico_color_dot');
+    if (!sel || !dot) return;
+    const medId = parseInt(sel.value);
+    const medico = (AppState.medicos || []).find(m => m.id == medId);
+    const color = (medico && medico.color) ? medico.color : (AppState.citaSeleccionada ? AppState.citaSeleccionada.medico_color : null);
+    if (color) {
+        dot.style.display = 'inline-flex';
+        dot.style.alignItems = 'center';
+        dot.style.backgroundColor = color;
+        dot.style.color = obtenerColorTextoParaFondo(color);
+        dot.innerHTML = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:currentColor; margin-right:4px;"></span>${color.toUpperCase()}`;
+    } else {
+        dot.style.display = 'none';
+    }
+}
+
 async function cargarCatalogoMedicos() {
     const tbody = document.getElementById('tbody_medicos_catalogo');
     if (!tbody) return;
@@ -2267,7 +2616,7 @@ async function cargarCatalogoMedicos() {
     const search = searchInput ? searchInput.value.trim() : '';
     const activo = filtroEstado ? filtroEstado.value : 'all';
 
-    tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-muted">Cargando catálogo de médicos...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="py-4 text-muted">Cargando catálogo de médicos...</td></tr>';
 
     try {
         const queryParams = new URLSearchParams();
@@ -2282,7 +2631,7 @@ async function cargarCatalogoMedicos() {
             AppState.catalogoMedicos = data.medicos;
 
             if (data.medicos.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="py-4 text-muted">No se encontraron médicos con los filtros aplicados.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="py-4 text-muted">No se encontraron médicos con los filtros aplicados.</td></tr>';
                 return;
             }
 
@@ -2312,14 +2661,21 @@ async function cargarCatalogoMedicos() {
                 const espLower = (m.especialidad || '').toLowerCase();
                 const esLab = nombreLower.includes('lab') || espLower.includes('lab');
                 const etiquetaRol = esLab ? 'Lab.' : 'Méd.';
+                const colorMed = m.color || '#4f90a5';
 
                 html += `
                     <tr class="${esActivo ? '' : 'opacity-75 bg-light'}">
                         <td class="text-start ps-4 fw-bold ${esActivo ? 'text-primary' : 'text-muted'}">
-                            <i class="bi bi-person-fill me-1 text-muted"></i> ${m.nombre}
+                            <i class="bi bi-person-fill me-1" style="color: ${colorMed}; font-size: 1.1rem;"></i> ${m.nombre}
                         </td>
                         <td>
                             <span class="badge-especialidad">${m.especialidad || 'General'}</span>
+                        </td>
+                        <td>
+                            <div class="d-inline-flex align-items-center gap-2 px-2 py-1 bg-white rounded border shadow-xs">
+                                <span style="display:inline-block; width:16px; height:16px; border-radius:50%; background-color:${colorMed}; border: 1px solid rgba(0,0,0,0.15);"></span>
+                                <span class="font-monospace small fw-bold text-dark" style="font-size: 0.76rem;">${colorMed.toUpperCase()}</span>
+                            </div>
                         </td>
                         <td class="small text-muted">
                             ${m.telefono ? `<i class="bi bi-telephone text-muted me-1"></i>${m.telefono}` : '<span class="text-muted fst-italic">No registrado</span>'}
@@ -2332,7 +2688,7 @@ async function cargarCatalogoMedicos() {
                         <td>${estadoBadge}</td>
                         <td>
                             <div class="d-flex align-items-center justify-content-center gap-1">
-                                <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="abrirModalEditarMedico(${m.id})" title="Editar especialidad o datos">
+                                <button class="btn btn-sm btn-outline-primary py-0 px-2" onclick="abrirModalEditarMedico(${m.id})" title="Editar especialidad, color o datos">
                                     <i class="bi bi-pencil-square"></i>
                                 </button>
                                 ${toggleBtn}
@@ -2350,10 +2706,10 @@ async function cargarCatalogoMedicos() {
             // Mantener sincronizados los médicos activos en AppState y selects de la agenda
             actualizarSelectsMedicos(data.medicos.filter(m => parseInt(m.activo) === 1));
         } else {
-            tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-danger">${json.message || 'Error al cargar catálogo'}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="py-4 text-danger">${json.message || 'Error al cargar catálogo'}</td></tr>`;
         }
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-4 text-danger">Error de comunicación: ${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="py-4 text-danger">Error de comunicación: ${e.message}</td></tr>`;
     }
 }
 
@@ -2371,6 +2727,8 @@ function abrirModalNuevoMedico() {
     document.getElementById('medico_form_porcentaje').value = '50.00';
     document.getElementById('medico_form_telefono').value = '';
     
+    setMedicoFormColor('#4f90a5');
+
     document.getElementById('modalGuardarMedicoLabel').innerHTML = '<i class="bi bi-person-plus-fill me-1"></i> Registrar Doctor / Especialista';
     document.getElementById('btn_guardar_medico').innerHTML = '<i class="bi bi-check-lg me-1"></i> Guardar Doctor';
 
@@ -2389,6 +2747,8 @@ function abrirModalEditarMedico(id) {
     document.getElementById('medico_form_porcentaje').value = parseFloat(medico.porcentaje_honorario || 50).toFixed(2);
     document.getElementById('medico_form_telefono').value = medico.telefono || '';
 
+    setMedicoFormColor(medico.color || '#4f90a5');
+
     document.getElementById('modalGuardarMedicoLabel').innerHTML = '<i class="bi bi-pencil-square me-1"></i> Editar Doctor / Especialista';
     document.getElementById('btn_guardar_medico').innerHTML = '<i class="bi bi-arrow-repeat me-1"></i> Actualizar Doctor';
 
@@ -2401,6 +2761,7 @@ async function guardarMedico(event) {
     const id = parseInt(document.getElementById('medico_form_id').value) || 0;
     const nombre = document.getElementById('medico_form_nombre').value.trim();
     const especialidad = document.getElementById('medico_form_especialidad').value.trim();
+    const color = document.getElementById('medico_form_color').value || '#4f90a5';
     const porcentaje = parseFloat(document.getElementById('medico_form_porcentaje').value) || 50.00;
     const telefono = document.getElementById('medico_form_telefono').value.trim();
 
@@ -2413,6 +2774,7 @@ async function guardarMedico(event) {
         id: id,
         nombre: nombre,
         especialidad: especialidad || 'Medicina General',
+        color: color,
         porcentaje_honorario: porcentaje,
         telefono: telefono
     };
@@ -2437,6 +2799,7 @@ async function guardarMedico(event) {
             bootstrap.Modal.getInstance(document.getElementById('modalGuardarMedico')).hide();
             mostrarToast(json.message || 'Doctor guardado exitosamente');
             cargarCatalogoMedicos();
+            cargarAgendaSegunVista();
         } else {
             mostrarToast(json.message || 'Error al guardar médico', 'danger');
         }
@@ -2508,6 +2871,7 @@ function actualizarSelectsMedicos(medicosActivos) {
             selectMed.appendChild(opt);
         });
         if (valorActual) selectMed.value = valorActual;
+        actualizarPreviewColorMedicoAgendar();
     }
 
     // Actualizar filtro de médicos de la agenda
@@ -2536,6 +2900,7 @@ function actualizarSelectsMedicos(medicosActivos) {
             selDetMed.appendChild(opt);
         });
         if (valorActual) selDetMed.value = valorActual;
+        actualizarPreviewColorMedicoDetalle();
     }
 }
 

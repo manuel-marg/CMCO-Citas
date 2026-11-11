@@ -42,9 +42,13 @@ El análisis de las fórmulas de las columnas `AE` a `AL` del Excel original rev
    * Cobrado: 100%.
    * Reparto: **50% ADH** / **50% Médico**.
 2. **Empleado (Beneficio de Empleado del Mes):**
-   * Paciente paga: **$0** (Exoneración al 100%).
+   * Paciente paga: **$0** (Exoneración al 100% de la consulta base).
    * Centro Médico (ADH): Exonera su cuota (**$0** para ADH).
    * Médico: **Recibe su 50% de honorario**, el cual es asumido y pagado directamente por el Centro Médico como beneficio laboral.
+   * **Procedimientos Adicionales (Rayos X, Férulas):** Si el empleado requiere insumos o estudios extras, se cobran en el modal de cobro:
+     - El empleado paga el 100% del adicional en caja.
+     - Si hay costo de laboratorio o proveedor externo, se descuenta íntegramente para liquidar a terceros.
+     - El neto restante se reparte en partes iguales (50% Médico / 50% Centro Médico ADH).
 3. **Participante ADH:**
    * Paciente paga: **$0**.
    * Centro Médico (ADH): Recibe **$0**.
@@ -59,6 +63,14 @@ El análisis de las fórmulas de las columnas `AE` a `AL` del Excel original rev
 6. **Exonerado Doctor:**
    * El Médico decide no cobrar sus honorarios (**$0** para el Médico).
    * El paciente abona el 50% que ingresa al Centro Médico (**50% ADH**).
+
+### Procedimientos e Insumos Adicionales (Rayos X, Férulas, Laboratorio):
+* **Campos en base de datos (`citas`):** `adicional_concepto` (VARCHAR), `adicional_monto` (DECIMAL), `costo_laboratorio` (DECIMAL).
+* **Monto Cobrado:** $\text{Base Cobrada} + \text{adicional\_monto}$.
+* **Deducción de Laboratorio:** `costo_laboratorio` se reserva para pago a terceros.
+* **Reparto Neto:** $\text{Neto} = \max(0, \text{adicional\_monto} - \text{costo\_laboratorio})$.
+  - $\text{Médico} = \text{Neto} \times (\% \text{Honorario} / 100)$.
+  - $\text{ADH} = \text{Neto} \times ((100 - \% \text{Honorario}) / 100)$.
 
 ### Fórmulas Algebraicas de las Columnas del Reporte
 * **Total Bruto (AI):** $\sum \text{Precio}$ para citas en estado `💲` o `📦`.
@@ -164,3 +176,20 @@ Para facilitar la instalación y migración del sistema en cualquier servidor o 
 * **Controles de UI y Resumen:** El directorio cuenta con botones de navegación con elipsis dinámica (`« 1 2 3 ... 13 »`), selector de límite por página, badge indicador con el total de pacientes registrados y leyenda contextual (`Mostrando X - Y de Z pacientes`).
 * **Búsqueda Multicriterio Desacoplada:** Permite filtrar instantáneamente por nombre, cédula o representante sin romper la estructura de paginación ni provocar fallos de ejecución en colecciones JavaScript.
 * **Autocompletado en Citas:** Adaptado para soportar respuestas paginadas u objetos estructurados del endpoint `api/pacientes.php?q=...` sin generar errores de tipo en la agenda.
+
+---
+
+## 11. Sistema de Colores por Médico y Personalización Visual de la Agenda
+* **Identidad Visual por Especialista:** En el sistema anterior (Google Sheets), cada doctor tenía un color distintivo. Este comportamiento se digitalizó completamente para que el personal mantenga la misma familiaridad visual sin choques operativos.
+* **Borde Izquierdo de Tarjetas:** En las vistas de Día (`.cita-card`), Semana (`.week-cita-item`) y Mes (`.cal-cita-chip`), el borde izquierdo resalta con el color configurado del médico (`border-left-color: ${medico_color} !important;`), mientras que el ícono/badge del estado sigue identificando si la cita está Agendada, Atendida, Pagada o Facturada.
+* **Base de Datos y Backend:**
+  * Columna `color VARCHAR(20) DEFAULT '#4f90a5'` en la tabla `medicos`.
+  * `api/medicos.php` expone el color en GET y permite guardarlo/actualizarlo en POST.
+  * `api/citas.php` vincula `m.color AS medico_color` en todas las consultas de citas.
+* **Gestor de Doctores y Paletas Preconfiguradas:**
+  * En la vista de Médicos (`views/medicos/index.php`), la tabla muestra una columna con la muestra de color y su código hexadecimal.
+  * Al registrar o editar un doctor (`#modalGuardarMedico`), se dispone de:
+    1. **Color Picker Nativo + Input HEX:** Permite cualquier color hexadecimal personalizado.
+    2. **Paleta del Sistema Anterior:** 18 colores exactos extraídos de la regla de validación de Google Sheets (Dra. Rosanny García `#e6e6e6`, Dra. Maribel Guilarte `#ffcbc1`, Dra. Ma.Auxiliadora Aguilera `#ffe699`, Dr. Jorge Valeri `#d0edb7`, Dra. Conchita Sánchez `#e6cbf4`, Dr. Carlos Eduardo Márquez `#3c3c3c`, Odo. Geraldine Cabrera `#b90602`, Dra. Evelyn Tranchino `#175b68`, Laboratorio `#0f714a`, etc.).
+    3. **Paleta de Colores Adicionales:** 16 colores modernos y contrastados para nuevos profesionales.
+* **Retroalimentación en Agendamiento y Detalle:** Al seleccionar un doctor en el modal de Agendar Cita (`#agendar_medico_id`) o en el modal de Detalle/Edición (`#det_medico_id`), se visualiza instantáneamente una pastilla con el color del médico para confirmación visual inmediata.

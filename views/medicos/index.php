@@ -44,6 +44,7 @@
                             <tr>
                                 <th class="text-start ps-4">Médico / Especialista</th>
                                 <th>Especialidad</th>
+                                <th>Color Agenda</th>
                                 <th>Teléfono</th>
                                 <th>% Honorarios</th>
                                 <th>Citas en Historial</th>
@@ -53,7 +54,7 @@
                         </thead>
                         <tbody id="tbody_medicos_catalogo">
                             <tr>
-                                <td colspan="7" class="py-4 text-muted">Cargando catálogo de médicos...</td>
+                                <td colspan="8" class="py-4 text-muted">Cargando catálogo de médicos...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -115,6 +116,37 @@
                                 <option value="Nutrición">
                                 <option value="Psicología">
                             </datalist>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Color para la Agenda -->
+                    <div class="mb-3">
+                        <label for="medico_form_color" class="form-label small fw-bold text-dark mb-1 d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-palette text-primary me-1"></i> Color en la Agenda</span>
+                            <span class="badge rounded-pill border" id="preview_color_badge" style="background-color: #4f90a5; color: #fff; font-size: 0.72rem;">#4F90A5</span>
+                        </label>
+                        
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <input type="color" class="form-control form-control-color border-secondary-subtle" id="medico_form_color" value="#4f90a5" title="Elegir color personalizado" oninput="actualizarPreviewColorMedico(this.value)">
+                            <input type="text" class="form-control form-control-sm font-monospace text-uppercase" id="medico_form_color_hex" value="#4F90A5" style="max-width: 100px;" oninput="actualizarColorDesdeInputHex(this.value)">
+                            <small class="text-muted" style="font-size: 0.75rem;">Color del borde izquierdo en las tarjetas de citas.</small>
+                        </div>
+
+                        <!-- Paletas de Colores Rápidos -->
+                        <div class="p-2 bg-light rounded-2 border">
+                            <div class="small fw-semibold text-muted mb-1" style="font-size: 0.72rem;">
+                                Colores del Sistema Anterior (Google Sheets):
+                            </div>
+                            <div class="d-flex flex-wrap gap-1 mb-2" id="paleta_colores_anteriores">
+                                <!-- Inyectado dinámicamente por JS -->
+                            </div>
+
+                            <div class="small fw-semibold text-muted mb-1" style="font-size: 0.72rem;">
+                                Colores Adicionales Disponibles:
+                            </div>
+                            <div class="d-flex flex-wrap gap-1" id="paleta_colores_adicionales">
+                                <!-- Inyectado dinámicamente por JS -->
+                            </div>
                         </div>
                     </div>
 
