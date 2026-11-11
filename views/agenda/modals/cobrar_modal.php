@@ -45,6 +45,27 @@
                             </span>
                         </div>
                         <div id="container_adicionales" class="card-body p-3 bg-light-subtle d-none border-top">
+                            <!-- Opción de Consulta Base vs Solo Procedimiento -->
+                            <div class="row g-2 mb-2 align-items-center bg-white p-2 rounded-2 border">
+                                <div class="col-md-7">
+                                    <label class="form-label small fw-bold text-dark mb-0 d-block">
+                                        <i class="bi bi-file-earmark-medical text-primary me-1"></i> Precio de Consulta Base ($ USD):
+                                    </label>
+                                    <span class="text-muted" style="font-size: 0.72rem;">
+                                        Si la cita es <strong>exclusivamente para el procedimiento</strong> (sin consulta médica base), deja $0.00 para no duplicar importes.
+                                    </span>
+                                </div>
+                                <div class="col-md-5 d-flex gap-2 justify-content-md-end align-items-center">
+                                    <div class="input-group input-group-sm" style="max-width: 130px;">
+                                        <span class="input-group-text bg-light">$ Base</span>
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm fw-bold text-end" id="cobrar_precio_base_input" name="precio_usd" value="0.00" oninput="cambiarPrecioBaseDesdeCobro()">
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2" style="font-size: 0.72rem;" onclick="fijarPrecioBaseCobro(0)" title="Cita exclusiva del procedimiento (sin consulta médica)">
+                                        Solo Proc. ($0)
+                                    </button>
+                                </div>
+                            </div>
+
                             <div class="row g-2 mb-2">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted mb-1">Concepto del Adicional:</label>

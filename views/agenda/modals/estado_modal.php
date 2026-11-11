@@ -77,13 +77,15 @@
                                 </select>
                             </div>
                             <div class="col-5">
-                                <label for="det_precio" class="form-label mb-1 text-secondary fw-semibold small" style="font-size: 0.76rem;">
-                                    <i class="bi bi-currency-dollar text-success me-1"></i> Precio ($ USD):
+                                <label for="det_precio" class="form-label mb-1 text-secondary fw-semibold small d-flex justify-content-between align-items-center" style="font-size: 0.76rem;">
+                                    <span><i class="bi bi-currency-dollar text-success me-1"></i> <span id="lbl_det_precio">Precio ($ USD)</span>:</span>
+                                    <span id="det_badge_adic_total" class="badge bg-warning-subtle text-dark border d-none" style="font-size: 0.68rem;"></span>
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text bg-light text-success fw-bold px-1.5">$</span>
-                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm fw-bold text-end border-secondary-subtle" id="det_precio" onchange="manejarCambioPrecioCita()" onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }" placeholder="0.00">
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-sm fw-bold text-end border-secondary-subtle" id="det_precio" oninput="actualizarHintPrecioDetalle()" onchange="manejarCambioPrecioCita()" onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }" placeholder="0.00">
                                 </div>
+                                <div id="det_total_bruto_hint" class="small text-muted text-end mt-0.5 d-none" style="font-size: 0.70rem;"></div>
                             </div>
                         </div>
 

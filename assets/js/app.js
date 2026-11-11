@@ -1189,6 +1189,7 @@ async function abrirDetalleCita(citaId) {
     if (inputPrecio) {
         inputPrecio.value = parseFloat(cita.precio_usd || 50.00).toFixed(2);
     }
+    actualizarHintPrecioDetalle(cita);
 
     // Estado de la cita
     const selectEstado = document.getElementById('det_estado');
@@ -1281,8 +1282,37 @@ function manejarCambioTipoCita() {
     }
 }
 
+function actualizarHintPrecioDetalle(citaParam) {
+    const cita = citaParam || AppState.citaSeleccionada;
+    if (!cita) return;
+    const adicMonto = parseFloat(cita.adicional_monto || 0);
+    const inputPrecio = document.getElementById('det_precio');
+    const precioBase = inputPrecio ? (parseFloat(inputPrecio.value) || 0) : (parseFloat(cita.precio_usd) || 0);
+    const lblPrecio = document.getElementById('lbl_det_precio');
+    const badgeAdic = document.getElementById('det_badge_adic_total');
+    const hintTotal = document.getElementById('det_total_bruto_hint');
+
+    if (adicMonto > 0) {
+        if (lblPrecio) lblPrecio.innerText = 'Precio Base';
+        if (badgeAdic) {
+            badgeAdic.innerText = `+Adic: $${adicMonto.toFixed(0)}`;
+            badgeAdic.classList.remove('d-none');
+        }
+        if (hintTotal) {
+            const totalBruto = precioBase + adicMonto;
+            hintTotal.innerHTML = `Total Bruto: <strong class="text-dark">$${totalBruto.toFixed(2)}</strong> <span class="text-muted">(Base $${precioBase.toFixed(2)} + Adic $${adicMonto.toFixed(2)})</span>`;
+            hintTotal.classList.remove('d-none');
+        }
+    } else {
+        if (lblPrecio) lblPrecio.innerText = 'Precio ($ USD)';
+        if (badgeAdic) badgeAdic.classList.add('d-none');
+        if (hintTotal) hintTotal.classList.add('d-none');
+    }
+}
+
 let timerPrecioDebounce = null;
 function manejarCambioPrecioCita() {
+    actualizarHintPrecioDetalle();
     if (!AppState.citaSeleccionada) return;
     const inputPrecio = document.getElementById('det_precio');
     if (!inputPrecio) return;
@@ -1555,6 +1585,8 @@ function abrirCobroDesdeDetalle() {
     if (inpMonto) inpMonto.value = adicMonto > 0 ? adicMonto.toFixed(2) : '0.00';
     const inpLab = document.getElementById('cobrar_costo_laboratorio');
     if (inpLab) inpLab.value = labCosto > 0 ? labCosto.toFixed(2) : '0.00';
+    const inpBaseCobro = document.getElementById('cobrar_precio_base_input');
+    if (inpBaseCobro) inpBaseCobro.value = parseFloat(cita.precio_usd || 0.0).toFixed(2);
 
     toggleAdicionalesCobro(false);
 
@@ -1606,6 +1638,25 @@ function togglePagoMixto() {
         document.getElementById('cobrar_monto_2').value = '0.00';
         recalcularConversionCobro();
     }
+}
+
+function cambiarPrecioBaseDesdeCobro() {
+    const inp = document.getElementById('cobrar_precio_base_input');
+    const nuevoBase = parseFloat(inp ? inp.value : 0) || 0.0;
+    if (AppState.cobrarCitaActual) {
+        AppState.cobrarCitaActual.precio_usd = nuevoBase;
+        let basePrecio = nuevoBase;
+        if (AppState.cobrarCitaActual.tipo === 'Familiar') basePrecio = basePrecio * 0.5;
+        if (AppState.cobrarCitaActual.tipo === 'Empleado' || AppState.cobrarCitaActual.tipo === 'Participante') basePrecio = 0.0;
+        AppState.cobrarBasePrecio = basePrecio;
+    }
+    recalcularConversionCobro();
+}
+
+function fijarPrecioBaseCobro(val) {
+    const inp = document.getElementById('cobrar_precio_base_input');
+    if (inp) inp.value = parseFloat(val).toFixed(2);
+    cambiarPrecioBaseDesdeCobro();
 }
 
 function recalcularConversionCobro() {
@@ -1706,9 +1757,14 @@ async function guardarCobro(e) {
         data.adicional_concepto = null;
         data.adicional_monto = 0.0;
         data.costo_laboratorio = 0.0;
+        delete data.precio_usd;
     } else {
         data.adicional_monto = parseFloat(data.adicional_monto) || 0.0;
         data.costo_laboratorio = parseFloat(data.costo_laboratorio) || 0.0;
+        const inpBase = document.getElementById('cobrar_precio_base_input');
+        if (inpBase) {
+            data.precio_usd = parseFloat(inpBase.value) || 0.0;
+        }
     }
 
     try {

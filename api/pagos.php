@@ -12,6 +12,7 @@ if ($method === 'POST') {
     $estado_final = trim($input['estado_final'] ?? 'Pagado'); // 'Pagado' o 'Facturado'
     $factura_o_empleado = trim($input['factura_o_empleado'] ?? '') ?: null;
     $tasa_bcv = (float)($input['tasa_bcv'] ?? 888.8909);
+    $precio_usd = isset($input['precio_usd']) ? max(0.0, (float)$input['precio_usd']) : null;
     $adicional_concepto = array_key_exists('adicional_concepto', $input) ? (trim($input['adicional_concepto'] ?? '') ?: null) : null;
     $adicional_monto = max(0.0, (float)($input['adicional_monto'] ?? 0.0));
     $costo_laboratorio = max(0.0, (float)($input['costo_laboratorio'] ?? 0.0));
@@ -64,6 +65,21 @@ if ($method === 'POST') {
         }
 
         // Actualizar la cita con el nuevo estado, tasa, comprobante y adicionales
+        $paramsUp = [
+            ':estado'     => $estado_final,
+            ':tasa'       => $tasa_bcv,
+            ':fac'        => $factura_o_empleado,
+            ':adic_conc'  => $adicional_concepto,
+            ':adic_monto' => $adicional_monto,
+            ':costo_lab'  => $costo_laboratorio,
+            ':id'         => $cita_id
+        ];
+        $precioSql = "";
+        if ($precio_usd !== null) {
+            $precioSql = ", precio_usd = :precio";
+            $paramsUp[':precio'] = $precio_usd;
+        }
+
         $upCita = $pdo->prepare("
             UPDATE citas
             SET estado = :estado,
@@ -72,17 +88,10 @@ if ($method === 'POST') {
                 adicional_concepto = :adic_conc,
                 adicional_monto = :adic_monto,
                 costo_laboratorio = :costo_lab
+                {$precioSql}
             WHERE id = :id
         ");
-        $upCita->execute([
-            ':estado'     => $estado_final,
-            ':tasa'       => $tasa_bcv,
-            ':fac'        => $factura_o_empleado,
-            ':adic_conc'  => $adicional_concepto,
-            ':adic_monto' => $adicional_monto,
-            ':costo_lab'  => $costo_laboratorio,
-            ':id'         => $cita_id
-        ]);
+        $upCita->execute($paramsUp);
 
         $pdo->commit();
         sendJsonResponse(true, null, "Pago registrado y cita marcada como {$estado_final}");
