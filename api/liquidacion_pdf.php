@@ -194,6 +194,20 @@ $stmtExon = $pdo->prepare("
 $stmtExon->execute([':fini' => $fecha_inicio, ':ffin' => $fecha_fin]);
 $exonerados = $stmtExon->fetchAll(PDO::FETCH_ASSOC);
 
+// E. Deducciones a Laboratorios Externos / Insumos Especializados
+$stmtDeducLab = $pdo->prepare("
+    SELECT c.*, p.nombre AS paciente_nombre, p.cedula, p.telefono, m.nombre AS medico_nombre, m.especialidad AS medico_especialidad
+    FROM citas c
+    INNER JOIN pacientes p ON p.id = c.paciente_id
+    INNER JOIN medicos m ON m.id = c.medico_id
+    WHERE c.costo_laboratorio > 0
+      AND c.estado IN ('Pagado', 'Facturado', 'Atendido', 'Completado')
+      AND c.fecha BETWEEN :fini AND :ffin
+    ORDER BY c.fecha ASC, c.hora ASC
+");
+$stmtDeducLab->execute([':fini' => $fecha_inicio, ':ffin' => $fecha_fin]);
+$deduccionesLab = $stmtDeducLab->fetchAll(PDO::FETCH_ASSOC);
+
 /**
  * Clase para el Documento PDF de Liquidación Consolidada
  * Formato Letter apaisado (Landscape): 279.4 x 215.9 mm (ancho útil 259.4 mm)
@@ -261,6 +275,8 @@ class LiquidacionConsolidadaPDF extends FPDF {
             $this->imprimirCabeceraParticipantes();
         } elseif ($this->tablaEnCurso === 'exonerados') {
             $this->imprimirCabeceraExonerados();
+        } elseif ($this->tablaEnCurso === 'deducciones_lab') {
+            $this->imprimirCabeceraDeduccionesLab();
         }
     }
 
@@ -392,6 +408,24 @@ class LiquidacionConsolidadaPDF extends FPDF {
         $this->Cell(24.0, 6.8, pdfTxt('Monto ($)  '), 1, 0, 'R', true);
         $this->Cell(22.4, 6.8, pdfTxt('Estado'), 1, 1, 'C', true);
     }
+
+    // Cabecera: Deducciones de Laboratorios Externos / Insumos de Terceros (Suma de anchos: 259.4 mm)
+    public function imprimirCabeceraDeduccionesLab(): void {
+        $this->SetFont('Arial', 'B', 8);
+        $this->SetFillColor(217, 119, 6); // Ámbar / Ocre oscuro
+        $this->SetTextColor(255, 255, 255);
+        $this->SetDrawColor(180, 83, 9);
+        $this->SetLineWidth(0.3);
+
+        $this->Cell(20.0, 6.4, pdfTxt('Fecha'), 1, 0, 'C', true);
+        $this->Cell(54.4, 6.4, pdfTxt('  Paciente'), 1, 0, 'L', true);
+        $this->Cell(22.0, 6.4, pdfTxt('Tipo'), 1, 0, 'C', true);
+        $this->Cell(45.0, 6.4, pdfTxt('  Médico Tratante'), 1, 0, 'L', true);
+        $this->Cell(38.0, 6.4, pdfTxt('  Concepto / Insumo'), 1, 0, 'L', true);
+        $this->Cell(26.0, 6.4, pdfTxt('Cobrado ($) '), 1, 0, 'R', true);
+        $this->Cell(28.0, 6.4, pdfTxt('Deduc. Lab ($) '), 1, 0, 'R', true);
+        $this->Cell(26.0, 6.4, pdfTxt('Neto Repart. ($) '), 1, 1, 'R', true);
+    }
 }
 
 // Instanciar documento PDF
@@ -476,6 +510,73 @@ $pdf->Cell(28.5, 7.8, '$ ' . number_format($totales['monto_medico'], 2, '.', ','
 
 $pdf->setTablaEnCurso('');
 
+// Subtabla de Deducciones a Laboratorios Externos / Insumos Especializados (si existen en el mes)
+if (!empty($deduccionesLab)) {
+    $pdf->Ln(4.5);
+    $totalDeduc = array_sum(array_map(fn($d) => (float)$d['costo_laboratorio'], $deduccionesLab));
+    $pdf->asegurarEspacio(26);
+
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->SetFillColor(254, 243, 199); // Ámbar suave
+    $pdf->SetTextColor(146, 64, 14); // Texto marrón oscuro
+    $pdf->SetDrawColor(245, 158, 11);
+    $pdf->SetLineWidth(0.3);
+
+    $pdf->Cell(259.4, 6.8, pdfTxt('  DEDUCCIONES DE LABORATORIOS EXTERNOS E INSUMOS DE TERCEROS (' . count($deduccionesLab) . ' procedimientos · Total Deducido a Proveedores: $' . number_format($totalDeduc, 2) . ')'), 1, 1, 'L', true);
+
+    $pdf->setTablaEnCurso('deducciones_lab');
+    $pdf->imprimirCabeceraDeduccionesLab();
+
+    $pdf->SetDrawColor(226, 232, 240);
+    $pdf->SetLineWidth(0.2);
+
+    $fillDeduc = false;
+    foreach ($deduccionesLab as $d) {
+        $pdf->asegurarEspacio(6.5);
+        $pdf->SetFillColor($fillDeduc ? 254 : 255, $fillDeduc ? 252 : 255, $fillDeduc ? 245 : 255);
+        $pdf->SetTextColor(33, 37, 41);
+
+        $pdf->SetFont('Arial', '', 7.8);
+        $pdf->Cell(20.0, 6.2, formatearFechaPdf($d['fecha']), 1, 0, 'C', true);
+
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->SetTextColor(29, 67, 83);
+        $pdf->Cell(54.4, 6.2, pdfTxt(' ' . $d['paciente_nombre']), 1, 0, 'L', true);
+
+        $pdf->SetFont('Arial', '', 7.5);
+        $pdf->SetTextColor(60, 60, 60);
+        $pdf->Cell(22.0, 6.2, pdfTxt($d['tipo']), 1, 0, 'C', true);
+        $pdf->Cell(45.0, 6.2, pdfTxt(' ' . $d['medico_nombre']), 1, 0, 'L', true);
+
+        $pdf->SetFont('Arial', 'B', 7.8);
+        $pdf->SetTextColor(180, 83, 9);
+        $pdf->Cell(38.0, 6.2, pdfTxt(' ' . ($d['adicional_concepto'] ?: 'Insumo Externo')), 1, 0, 'L', true);
+
+        $montoCobradoAdic = (float)$d['adicional_monto'];
+        $costoLab = (float)$d['costo_laboratorio'];
+        $netoRepart = max(0.0, $montoCobradoAdic - $costoLab);
+
+        $pdf->SetFont('Arial', '', 7.8);
+        $pdf->SetTextColor(33, 37, 41);
+        $pdf->Cell(26.0, 6.2, '$ ' . number_format($montoCobradoAdic, 2) . '  ', 1, 0, 'R', true);
+
+        $pdf->SetFont('Arial', 'B', 8);
+        $pdf->SetTextColor(185, 28, 28); // Rojo
+        $pdf->Cell(28.0, 6.2, '-$ ' . number_format($costoLab, 2) . '  ', 1, 0, 'R', true);
+
+        $pdf->SetTextColor(25, 135, 84); // Verde
+        $pdf->Cell(26.0, 6.2, '$ ' . number_format($netoRepart, 2) . '  ', 1, 1, 'R', true);
+
+        $fillDeduc = !$fillDeduc;
+    }
+    $pdf->setTablaEnCurso('');
+
+    // Nota al pie
+    $pdf->SetFont('Arial', 'I', 7.2);
+    $pdf->SetTextColor(120, 120, 120);
+    $pdf->Cell(259.4, 4.5, pdfTxt('* Nota Contable: Los importes de "Deduc. Lab" corresponden a costos de laboratorios externos (férulas, odontología, etc.) que se descuentan al 100% para pago directo a proveedores antes de repartir honorarios.'), 0, 1, 'L');
+}
+
 // =========================================================================
 // SECCIÓN 2: AUDITORÍA Y CONTROL DE BENEFICIOS Y EXONERACIONES
 // =========================================================================
@@ -485,7 +586,7 @@ $pdf->imprimirTituloSeccion('SECCIÓN 2: AUDITORÍA Y CONTROL DE BENEFICIOS Y EX
 // -------------------------------------------------------------------------
 // 2.1 EMPLEADOS DEL MES
 // -------------------------------------------------------------------------
-$totalEmp = array_sum(array_map(fn($c) => (float)$c['precio_usd'], $empleados));
+$totalEmp = array_sum(array_map(fn($c) => (float)$c['precio_usd'] + (float)($c['adicional_monto'] ?? 0), $empleados));
 $pdf->imprimirTituloSubseccion('1. EMPLEADOS DEL MES (Beneficio 100% Exonerado)', count($empleados), $totalEmp);
 $pdf->setTablaEnCurso('empleados');
 $pdf->imprimirCabeceraEmpleados();
@@ -507,9 +608,16 @@ if (empty($empleados)) {
         $pdf->SetFont('Arial', '', 7.8);
         $pdf->Cell(24.0, 6.2, formatearFechaPdf($c['fecha']), 1, 0, 'C', true);
 
+        $nombreEmp = ' ' . $c['paciente_nombre'];
+        $adicMontoEmp = (float)($c['adicional_monto'] ?? 0);
+        $labCostoEmp = (float)($c['costo_laboratorio'] ?? 0);
+        if ($adicMontoEmp > 0) {
+            $nombreEmp .= ' [+' . ($c['adicional_concepto'] ?: 'Adic.') . ': $' . number_format($adicMontoEmp, 0) . ']';
+        }
+
         $pdf->SetFont('Arial', 'B', 8);
         $pdf->SetTextColor(29, 67, 83);
-        $pdf->Cell(68.0, 6.2, pdfTxt(' ' . $c['paciente_nombre']), 1, 0, 'L', true);
+        $pdf->Cell(68.0, 6.2, pdfTxt($nombreEmp), 1, 0, 'L', true);
 
         $pdf->SetFont('Arial', '', 7.8);
         $pdf->SetTextColor(33, 37, 41);
@@ -517,12 +625,22 @@ if (empty($empleados)) {
         $pdf->Cell(32.0, 6.2, pdfTxt($c['telefono'] ?: '-'), 1, 0, 'C', true);
         $pdf->Cell(60.0, 6.2, pdfTxt(' ' . $c['medico_nombre']), 1, 0, 'L', true);
 
+        $montoTotalEmp = (float)$c['precio_usd'] + $adicMontoEmp;
         $pdf->SetFont('Arial', 'B', 8);
-        $pdf->Cell(24.0, 6.2, '$ ' . number_format((float)$c['precio_usd'], 2) . '  ', 1, 0, 'R', true);
+        $pdf->Cell(24.0, 6.2, '$ ' . number_format($montoTotalEmp, 2) . '  ', 1, 0, 'R', true);
 
         $pdf->SetFont('Arial', '', 7.5);
         $pdf->SetTextColor(25, 135, 84);
         $pdf->Cell(23.4, 6.2, pdfTxt($c['estado']), 1, 1, 'C', true);
+
+        // Si tuvo deducción de laboratorio externo, imprimir nota aclaratoria inmediata
+        if ($labCostoEmp > 0) {
+            $pdf->asegurarEspacio(4.5);
+            $pdf->SetFont('Arial', 'I', 7.2);
+            $pdf->SetTextColor(180, 83, 9);
+            $pdf->SetFillColor(254, 252, 243);
+            $pdf->Cell(259.4, 4.2, pdfTxt('   * Procedimiento con deducción: Se descontaron $' . number_format($labCostoEmp, 2) . ' de costo de laboratorio externo (' . ($c['adicional_concepto'] ?: 'Férula / Insumo') . ') pagados al proveedor.'), 1, 1, 'L', true);
+        }
 
         $fill = !$fill;
     }
@@ -751,10 +869,18 @@ $pdf->SetFillColor(255, 255, 255);
 $pdf->Cell(85.0, 5.8, pdfTxt('  - Participantes ADH:'), 'L', 0, 'L', true);
 $pdf->Cell(44.7, 5.8, pdfTxt(count($participantes) . ' citas  ($' . number_format($totalPart, 2) . ')'), 'R', 0, 'R', true);
 
-$pdf->Cell(85.0, 5.8, pdfTxt('  - Margen Neto Centro Médico (Monto ADH):'), 'L', 0, 'L', true);
-$pdf->SetFont('Arial', 'B', 8);
-$pdf->SetTextColor(79, 144, 165);
-$pdf->Cell(44.7, 5.8, '$ ' . number_format($totales['monto_adh'], 2) . '  ', 'R', 1, 'R', true);
+$totLab = (float)($totales['monto_laboratorio'] ?? 0.0);
+if ($totLab > 0) {
+    $pdf->Cell(85.0, 5.8, pdfTxt('  - Deducciones a Laboratorios Externos:'), 'L', 0, 'L', true);
+    $pdf->SetFont('Arial', 'B', 8);
+    $pdf->SetTextColor(185, 28, 28);
+    $pdf->Cell(44.7, 5.8, '-$ ' . number_format($totLab, 2) . '  ', 'R', 1, 'R', true);
+} else {
+    $pdf->Cell(85.0, 5.8, pdfTxt('  - Margen Neto Centro Médico (Monto ADH):'), 'L', 0, 'L', true);
+    $pdf->SetFont('Arial', 'B', 8);
+    $pdf->SetTextColor(79, 144, 165);
+    $pdf->Cell(44.7, 5.8, '$ ' . number_format($totales['monto_adh'], 2) . '  ', 'R', 1, 'R', true);
+}
 
 // Fila D
 $pdf->SetFont('Arial', '', 8);
@@ -763,9 +889,16 @@ $pdf->SetFillColor(248, 249, 250);
 $pdf->Cell(85.0, 5.8, pdfTxt('  - Consultas Exoneradas:'), 'L', 0, 'L', true);
 $pdf->Cell(44.7, 5.8, pdfTxt(count($exonerados) . ' citas  ($' . number_format($totalExon, 2) . ')'), 'R', 0, 'R', true);
 
-$pdf->Cell(85.0, 5.8, pdfTxt('  - Total Citas Efectivas del Período:'), 'L', 0, 'L', true);
-$pdf->SetFont('Arial', 'B', 8);
-$pdf->Cell(44.7, 5.8, $totales['citas_pagadas'] . ' pagadas de ' . $totales['cantidad_citas'] . '  ', 'R', 1, 'R', true);
+if ($totLab > 0) {
+    $pdf->Cell(85.0, 5.8, pdfTxt('  - Margen Neto Centro Médico (Monto ADH):'), 'L', 0, 'L', true);
+    $pdf->SetFont('Arial', 'B', 8);
+    $pdf->SetTextColor(79, 144, 165);
+    $pdf->Cell(44.7, 5.8, '$ ' . number_format($totales['monto_adh'], 2) . '  ', 'R', 1, 'R', true);
+} else {
+    $pdf->Cell(85.0, 5.8, pdfTxt('  - Total Citas Efectivas del Período:'), 'L', 0, 'L', true);
+    $pdf->SetFont('Arial', 'B', 8);
+    $pdf->Cell(44.7, 5.8, $totales['citas_pagadas'] . ' pagadas de ' . $totales['cantidad_citas'] . '  ', 'R', 1, 'R', true);
+}
 
 // Fila Totales de Balance (Destacada)
 $pdf->SetFont('Arial', 'B', 8.5);

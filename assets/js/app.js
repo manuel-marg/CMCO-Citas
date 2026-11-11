@@ -1951,6 +1951,40 @@ async function cargarLiquidacion() {
                     <td class="no-print"></td>
                 </tr>
             `;
+
+            // Tarjeta de Deducciones de Laboratorios Externos / Insumos
+            const cardDeduc = document.getElementById('card_deducciones_lab');
+            const tbodyDeduc = document.getElementById('tbody_deducciones_lab');
+            const badgeDeduc = document.getElementById('badge_total_deduc_lab');
+            if (cardDeduc && tbodyDeduc) {
+                if (Array.isArray(data.deducciones_laboratorio) && data.deducciones_laboratorio.length > 0) {
+                    let dHtml = '';
+                    let totDeduc = 0;
+                    data.deducciones_laboratorio.forEach(d => {
+                        const adic = parseFloat(d.adicional_monto || 0);
+                        const lab = parseFloat(d.costo_laboratorio || 0);
+                        const neto = Math.max(0, adic - lab);
+                        totDeduc += lab;
+                        dHtml += `
+                            <tr>
+                                <td>${d.fecha}</td>
+                                <td class="text-start ps-3 fw-bold text-dark">${d.paciente_nombre}</td>
+                                <td><span class="badge bg-light text-muted border">${d.tipo}</span></td>
+                                <td class="text-start ps-2">${d.medico_nombre}</td>
+                                <td class="fw-semibold text-warning-emphasis">${d.adicional_concepto || 'Insumo Externo'}</td>
+                                <td class="fw-bold">$${adic.toFixed(2)}</td>
+                                <td class="fw-bold text-danger">-$${lab.toFixed(2)}</td>
+                                <td class="fw-bold text-success">$${neto.toFixed(2)}</td>
+                            </tr>
+                        `;
+                    });
+                    tbodyDeduc.innerHTML = dHtml;
+                    if (badgeDeduc) badgeDeduc.innerText = `Total Deducido: -$${totDeduc.toFixed(2)}`;
+                    cardDeduc.classList.remove('d-none');
+                } else {
+                    cardDeduc.classList.add('d-none');
+                }
+            }
         }
     } catch (e) {
         tbody.innerHTML = `<tr><td colspan="9" class="py-4 text-danger">Error al cargar liquidación: ${e.message}</td></tr>`;

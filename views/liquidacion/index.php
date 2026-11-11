@@ -81,6 +81,39 @@
             </div>
         </div>
 
+        <!-- Tarjeta de Deducciones de Laboratorios Externos / Insumos de Terceros -->
+        <div class="card shadow-sm border-warning-subtle mb-4 d-none" id="card_deducciones_lab">
+            <div class="card-header bg-warning-subtle py-2 px-3 d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-dark small">
+                    <i class="bi bi-box-seam text-warning-emphasis me-1"></i> Deducciones a Laboratorios Externos e Insumos de Terceros (Pagos Fijos Directos Sin Porcentaje)
+                </span>
+                <span class="badge bg-warning text-dark border border-warning" id="badge_total_deduc_lab">$0.00</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover align-middle mb-0 text-center" style="font-size: 0.82rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th class="text-start ps-3">Paciente</th>
+                                <th>Tipo</th>
+                                <th>Médico Tratante</th>
+                                <th>Procedimiento / Insumo</th>
+                                <th>Cobrado</th>
+                                <th class="text-danger fw-bold">Deduc. Lab (Fijo)</th>
+                                <th class="text-success fw-bold">Neto Repartido</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody_deducciones_lab">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white py-1 px-3 text-muted small" style="font-size: 0.72rem;">
+                <i class="bi bi-info-circle me-1"></i> Los importes de <strong>Deduc. Lab</strong> corresponden a costos directos de laboratorios externos (férulas, odontología, prótesis, etc.) que se liquidan íntegramente a terceros sin porcentaje institucional ni médico.
+            </div>
+        </div>
+
         <!-- Detalle de Citas del Médico Seleccionado -->
         <div class="card shadow-sm border-0 d-none" id="card_detalle_medico">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">

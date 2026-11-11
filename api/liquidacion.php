@@ -85,6 +85,20 @@ foreach ($liquidaciones as $l) {
     $totales['monto_laboratorio'] += (float)($l['monto_laboratorio'] ?? 0.0);
 }
 
+// Citas con deducciones a laboratorios externos o insumos de terceros
+$stmtDeducLab = $pdo->prepare("
+    SELECT c.*, p.nombre AS paciente_nombre, p.cedula AS paciente_cedula, m.nombre AS medico_nombre, m.especialidad AS medico_especialidad
+    FROM citas c
+    INNER JOIN pacientes p ON p.id = c.paciente_id
+    INNER JOIN medicos m ON m.id = c.medico_id
+    WHERE c.costo_laboratorio > 0
+      AND c.estado IN ('Pagado', 'Facturado')
+      AND c.fecha BETWEEN :fini AND :ffin
+    ORDER BY c.fecha ASC, c.hora ASC
+");
+$stmtDeducLab->execute([':fini' => $fecha_inicio, ':ffin' => $fecha_fin]);
+$deducciones_laboratorio = $stmtDeducLab->fetchAll();
+
 // Si se pide el detalle de citas de un médico específico
 $medico_id = isset($_GET['medico_id']) ? (int)$_GET['medico_id'] : 0;
 $citas_detalle = [];
@@ -102,10 +116,11 @@ if ($medico_id > 0) {
 }
 
 sendJsonResponse(true, [
-    'mes'           => $mes,
-    'fecha_inicio'  => $fecha_inicio,
-    'fecha_fin'     => $fecha_fin,
-    'liquidaciones' => $liquidaciones,
-    'totales'       => $totales,
-    'citas_detalle' => $citas_detalle
+    'mes'                     => $mes,
+    'fecha_inicio'            => $fecha_inicio,
+    'fecha_fin'               => $fecha_fin,
+    'liquidaciones'           => $liquidaciones,
+    'totales'                 => $totales,
+    'deducciones_laboratorio' => $deducciones_laboratorio,
+    'citas_detalle'           => $citas_detalle
 ]);
