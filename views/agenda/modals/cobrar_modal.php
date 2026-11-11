@@ -22,8 +22,10 @@
                                     <div class="small text-muted" id="cobrar_info_adicional">Dr. / Consultorio / Hora</div>
                                 </div>
                                 <div class="col-md-5 text-md-end">
+                                    <div class="small text-muted fw-semibold" style="font-size: 0.72rem;">Monto a Cobrar en Caja:</div>
                                     <div class="fs-4 fw-bold text-success" id="cobrar_precio_display">$50.00</div>
                                     <div class="small text-muted" id="cobrar_precio_bs_display">Bs. 0,00 (Tasa BCV)</div>
+                                    <div class="small text-secondary fw-semibold mt-1" id="cobrar_total_bruto_display" style="font-size: 0.72rem;"></div>
                                 </div>
                             </div>
                         </div>

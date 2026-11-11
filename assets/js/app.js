@@ -1648,17 +1648,28 @@ function recalcularConversionCobro() {
     const citaActual = AppState.cobrarCitaActual;
     const infoAdicEl = document.getElementById('cobrar_info_adicional');
     if (citaActual && infoAdicEl) {
+        const precioBaseNominal = parseFloat(citaActual.precio_usd || 0);
         let detalleTexto = `${citaActual.medico_nombre} · ${citaActual.consultorio_nombre} · ${formatearHora12(citaActual.hora)} · Tipo: ${citaActual.tipo}`;
         if (citaActual.tipo === 'Empleado' || citaActual.tipo === 'Participante') {
             if (tieneAdic && adicMonto > 0) {
-                detalleTexto += ` (Consulta Base: $0.00 Exonerada + Adicional: $${adicMonto.toFixed(2)})`;
+                detalleTexto += ` (Consulta Base: $${precioBaseNominal.toFixed(2)} [Exonerada a empleado] + Adicional: $${adicMonto.toFixed(2)})`;
             } else {
-                detalleTexto += ` (Consulta Base: $0.00 Beneficio 100% Exonerado)`;
+                detalleTexto += ` (Consulta Base: $${precioBaseNominal.toFixed(2)} [Beneficio 100% Exonerado])`;
             }
         } else if (tieneAdic && adicMonto > 0) {
             detalleTexto += ` (Base: $${base.toFixed(2)} + Adicional: $${adicMonto.toFixed(2)})`;
         }
         infoAdicEl.innerText = detalleTexto;
+
+        const totalBrutoCita = precioBaseNominal + adicMonto;
+        const elTotalBruto = document.getElementById('cobrar_total_bruto_display');
+        if (elTotalBruto) {
+            if (adicMonto > 0) {
+                elTotalBruto.innerHTML = `<span class="badge bg-light text-dark border">Total Bruto Cita: <strong>$${totalBrutoCita.toFixed(2)}</strong></span> <span class="text-muted" style="font-size: 0.68rem;">(Base: $${precioBaseNominal.toFixed(2)} + Adic: $${adicMonto.toFixed(2)})</span>`;
+            } else {
+                elTotalBruto.innerHTML = '';
+            }
+        }
     }
 
     // Si no es pago mixto, sincronizar automáticamente monto_1
