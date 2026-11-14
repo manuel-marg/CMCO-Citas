@@ -113,20 +113,21 @@ INSERT INTO `consultorios` (`nombre`, `numero`) VALUES
 ON DUPLICATE KEY UPDATE `numero` = VALUES(`numero`);
 
 -- Médicos del catálogo inicial
-INSERT INTO `medicos` (`nombre`, `especialidad`, `porcentaje_honorario`) VALUES
-('Dr. Carlos Eduardo Márquez', 'Especialista', 50.00),
-('Dr. Jorge Valeri', 'Cardiología', 50.00),
-('Dra. Conchita Sánchez', 'Medicina General', 50.00),
-('Dra. Evelyn Tranchino', 'Medicina General', 50.00),
-('Dra. Gabriela Berbis', 'Pediatría', 50.00),
-('Dra. Gerlly Mendoza', 'Medicina General', 50.00),
-('Dra. Ma.Auxiliadora Aguilera', 'Especialista', 50.00),
-('Dra. Maribel Guilarte', 'Medicina General', 50.00),
-('Dra. Mónica Porras', 'Medicina General', 50.00),
-('Dra. Rosanny García', 'Medicina General', 50.00),
-('Luzmir Fagúndez', 'Terapia / Especialista', 50.00),
-('Odo. Geraldine Cabrera', 'Odontología', 50.00)
-ON DUPLICATE KEY UPDATE `porcentaje_honorario` = VALUES(`porcentaje_honorario`);
+INSERT INTO `medicos` (`nombre`, `especialidad`, `color`, `porcentaje_honorario`) VALUES
+('Dr. Carlos Eduardo Márquez', 'Especialista', '#3c3c3c', 50.00),
+('Dr. Jorge Valeri', 'Cardiología', '#d0edb7', 50.00),
+('Dra. Conchita Sánchez', 'Medicina General', '#e6cbf4', 50.00),
+('Dra. Evelyn Tranchino', 'Medicina General', '#175b68', 50.00),
+('Dra. Gabriela Berbis', 'Pediatría', '#f8b3a3', 50.00),
+('Dra. Gerlly Mendoza', 'Medicina General', '#ffe5b8', 50.00),
+('Dra. Ma.Auxiliadora Aguilera', 'Especialista', '#ffe699', 50.00),
+('Dra. Maribel Guilarte', 'Medicina General', '#ffcbc1', 50.00),
+('Dra. Mónica Porras', 'Medicina General', '#c1dce3', 50.00),
+('Dra. Rosanny García', 'Medicina General', '#e6e6e6', 50.00),
+('Luzmir Fagúndez', 'Terapia / Especialista', '#784516', 50.00),
+('Odo. Geraldine Cabrera', 'Odontología', '#b90602', 50.00),
+('Laboratorio', 'Laboratorio', '#0f714a', 80.00)
+ON DUPLICATE KEY UPDATE `color` = VALUES(`color`), `porcentaje_honorario` = VALUES(`porcentaje_honorario`);
 
 -- Usuario administrador por defecto (cmco_admin / admin123)
 -- Hash generado para 'admin123' con password_hash('admin123', PASSWORD_BCRYPT)

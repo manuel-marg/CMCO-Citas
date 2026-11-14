@@ -1282,6 +1282,18 @@ function manejarCambioTipoCita() {
     }
 }
 
+function fijarPrecioBaseDetalle(val = 0) {
+    const inputPrecio = document.getElementById('det_precio');
+    if (inputPrecio) {
+        inputPrecio.value = parseFloat(val).toFixed(2);
+        if (AppState.citaSeleccionada) {
+            AppState.citaSeleccionada.precio_usd = parseFloat(val);
+        }
+        actualizarHintPrecioDetalle();
+        autoGuardarDetalleCita('precio');
+    }
+}
+
 function actualizarHintPrecioDetalle(citaParam) {
     const cita = citaParam || AppState.citaSeleccionada;
     if (!cita) return;
@@ -1293,14 +1305,38 @@ function actualizarHintPrecioDetalle(citaParam) {
     const hintTotal = document.getElementById('det_total_bruto_hint');
 
     if (adicMonto > 0) {
-        if (lblPrecio) lblPrecio.innerText = 'Precio Base';
+        if (lblPrecio) lblPrecio.innerText = 'Consulta Base ($)';
         if (badgeAdic) {
-            badgeAdic.innerText = `+Adic: $${adicMonto.toFixed(0)}`;
+            badgeAdic.innerText = `+${cita.adicional_concepto || 'Adic'}: $${adicMonto.toFixed(0)}`;
             badgeAdic.classList.remove('d-none');
         }
         if (hintTotal) {
             const totalBruto = precioBase + adicMonto;
-            hintTotal.innerHTML = `Total Bruto: <strong class="text-dark">$${totalBruto.toFixed(2)}</strong> <span class="text-muted">(Base $${precioBase.toFixed(2)} + Adic $${adicMonto.toFixed(2)})</span>`;
+            if (precioBase > 0) {
+                hintTotal.innerHTML = `
+                    <div class="alert alert-warning py-1.5 px-2 mb-0 text-start border-warning-subtle shadow-sm rounded-2" style="font-size: 0.73rem; line-height: 1.3;">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-dark"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Suma doble de Base + Procedimiento</span>
+                            <span class="badge bg-warning text-dark fw-bold">Total Bruto: $${totalBruto.toFixed(2)}</span>
+                        </div>
+                        <div class="text-secondary mb-1">
+                            Se sumaría: <strong>Base ($${precioBase.toFixed(2)})</strong> + <strong>${cita.adicional_concepto || 'Procedimiento'} ($${adicMonto.toFixed(2)})</strong>.
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center pt-1 border-top border-warning-subtle">
+                            <span class="text-dark fw-medium" style="font-size: 0.70rem;">¿Esta cita es solo para el procedimiento?</span>
+                            <button type="button" class="btn btn-xs btn-outline-dark py-0.5 px-2 fw-bold" style="font-size: 0.68rem;" onclick="fijarPrecioBaseDetalle(0)">
+                                <i class="bi bi-arrow-down-circle me-1"></i>Fijar Base en $0
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                hintTotal.innerHTML = `
+                    <div class="bg-success-subtle text-success border border-success-subtle rounded-2 py-1 px-2 text-start small fw-semibold" style="font-size: 0.72rem;">
+                        <i class="bi bi-check-circle-fill me-1"></i>Cita exclusiva de procedimiento: <strong>$${adicMonto.toFixed(2)}</strong> (Consulta Base: $0.00)
+                    </div>
+                `;
+            }
             hintTotal.classList.remove('d-none');
         }
     } else {
@@ -1716,7 +1752,27 @@ function recalcularConversionCobro() {
         const elTotalBruto = document.getElementById('cobrar_total_bruto_display');
         if (elTotalBruto) {
             if (adicMonto > 0) {
-                elTotalBruto.innerHTML = `<span class="badge bg-light text-dark border">Total Bruto Cita: <strong>$${totalBrutoCita.toFixed(2)}</strong></span> <span class="text-muted" style="font-size: 0.68rem;">(Base: $${precioBaseNominal.toFixed(2)} + Adic: $${adicMonto.toFixed(2)})</span>`;
+                if (precioBaseNominal > 0) {
+                    elTotalBruto.innerHTML = `
+                        <div class="alert alert-warning py-1.5 px-2 mt-2 mb-0 border-warning-subtle text-start rounded-2" style="font-size: 0.72rem; line-height: 1.25;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold text-dark"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Suma doble Base + Procedimiento</span>
+                                <span class="badge bg-warning text-dark fw-bold">Total Bruto: $${totalBrutoCita.toFixed(2)}</span>
+                            </div>
+                            <div class="text-secondary small">
+                                Base: <strong>$${precioBaseNominal.toFixed(2)}</strong> + Adic: <strong>$${adicMonto.toFixed(2)}</strong>.
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center pt-1 mt-1 border-top border-warning-subtle">
+                                <span class="text-muted" style="font-size: 0.68rem;">¿Cita sin consulta médica previa?</span>
+                                <button type="button" class="btn btn-xs btn-outline-dark py-0.5 px-2 fw-bold" style="font-size: 0.68rem;" onclick="fijarPrecioBaseCobro(0)">
+                                    Solo Proc. ($0 Base)
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    elTotalBruto.innerHTML = `<span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 mt-1"><i class="bi bi-check-circle me-1"></i>Cita de Solo Procedimiento: <strong>$${adicMonto.toFixed(2)}</strong> (Base: $0)</span>`;
+                }
             } else {
                 elTotalBruto.innerHTML = '';
             }

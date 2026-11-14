@@ -85,9 +85,11 @@
                                     <span class="input-group-text bg-light text-success fw-bold px-1.5">$</span>
                                     <input type="number" step="0.01" min="0" class="form-control form-control-sm fw-bold text-end border-secondary-subtle" id="det_precio" oninput="actualizarHintPrecioDetalle()" onchange="manejarCambioPrecioCita()" onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }" placeholder="0.00">
                                 </div>
-                                <div id="det_total_bruto_hint" class="small text-muted text-end mt-0.5 d-none" style="font-size: 0.70rem;"></div>
                             </div>
                         </div>
+
+                        <!-- Alerta/Aviso de Total Bruto cuando hay procedimiento adicional -->
+                        <div id="det_total_bruto_hint" class="d-none mt-1"></div>
 
                         <!-- Selector de Estado de la Cita -->
                         <div class="mt-2">
