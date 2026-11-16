@@ -34,7 +34,7 @@ function registrarLog(string $mensaje, string $tipo = 'info') {
 }
 
 try {
-    $db = Database::getInstance()->getConnection();
+    $db = Database::getConnection();
     registrarLog("Conexión a MariaDB/MySQL establecida exitosamente.", 'success');
 
     // 1. Crear tabla de control de migraciones si no existe
@@ -71,17 +71,26 @@ try {
         registrarLog("Columna 'costo_laboratorio' agregada a 'citas'.", 'success');
     }
 
-    // Paleta de colores para médicos existentes
+    // Paleta de colores para médicos existentes (tanto históricos como actuales)
     $coloresMedicos = [
-        'Rosanny García'    => '#6aa3b4',
-        'Maribel Guilarte'  => '#f0a8a8',
+        'Carlos Eduardo'    => '#3c3c3c',
+        'Jorge Valeri'      => '#d0edb7',
+        'Conchita'          => '#e6cbf4',
+        'Evelyn Tranchino'  => '#175b68',
+        'Gabriela Berbis'   => '#f8b3a3',
+        'Gerlly Mendoza'    => '#ffe5b8',
+        'Auxiliadora'       => '#ffe699',
+        'Maribel Guilarte'  => '#ffcbc1',
+        'Mónica Porras'     => '#c1dce3',
+        'Monica Porras'     => '#c1dce3',
+        'Rosanny'           => '#e6e6e6',
+        'Luzmir'            => '#784516',
+        'Geraldine Cabrera' => '#b90602',
+        'Laboratorio'       => '#0f714a',
         'Lyl Belisario'     => '#f5be9e',
-        'Auxiliadora'       => '#f9d884',
-        'Jorge Valeri'      => '#b2d8a4',
         'José Francisco'    => '#b8d5e5',
         'Mónica Ramos'      => '#d8b4e2',
         'Luisana Valera'    => '#f5c2c7',
-        'Luzmir'            => '#784516',
         'Nehomar'           => '#3d8bfd',
         'María Eugenia'     => '#8540f5',
         'Johanna Ramos'     => '#e599f7',

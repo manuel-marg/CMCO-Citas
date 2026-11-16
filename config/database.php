@@ -12,6 +12,10 @@ class Database {
     private const DB_PASS = '';
     private const DB_PORT = '3306';
 
+    public static function getInstance(): self {
+        return new self();
+    }
+
     public static function getConnection(): PDO {
         if (self::$instance === null) {
             try {
