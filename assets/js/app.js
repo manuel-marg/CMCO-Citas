@@ -1232,6 +1232,21 @@ async function abrirDetalleCita(citaId) {
                     labLine.classList.add('d-none');
                 }
             }
+            const repLine = document.getElementById('det_reparto_line');
+            const repTxt = document.getElementById('det_reparto_texto');
+            if (repLine && repTxt) {
+                if (cita.adicional_reparto === 'centro' || (cita.adicional_concepto && cita.adicional_concepto.toLowerCase().includes('citolog'))) {
+                    repTxt.className = 'badge bg-info-subtle text-info-emphasis border border-info-subtle';
+                    repTxt.innerText = '100% Centro ADH ($0 Médico)';
+                    repLine.classList.remove('d-none');
+                } else if (adicMonto > 0) {
+                    repTxt.className = 'badge bg-light text-secondary border';
+                    repTxt.innerText = '50% Médico / 50% ADH';
+                    repLine.classList.remove('d-none');
+                } else {
+                    repLine.classList.add('d-none');
+                }
+            }
             adicBox.classList.remove('d-none');
         } else {
             adicBox.classList.add('d-none');
@@ -1623,6 +1638,14 @@ function abrirCobroDesdeDetalle() {
     if (inpLab) inpLab.value = labCosto > 0 ? labCosto.toFixed(2) : '0.00';
     const inpBaseCobro = document.getElementById('cobrar_precio_base_input');
     if (inpBaseCobro) inpBaseCobro.value = parseFloat(cita.precio_usd || 0.0).toFixed(2);
+    const selReparto = document.getElementById('cobrar_adicional_reparto');
+    if (selReparto) {
+        let repVal = cita.adicional_reparto;
+        if (!repVal && cita.adicional_concepto && cita.adicional_concepto.toLowerCase().includes('citolog')) {
+            repVal = 'centro';
+        }
+        selReparto.value = repVal || 'compartido';
+    }
 
     toggleAdicionalesCobro(false);
 
@@ -1695,6 +1718,46 @@ function fijarPrecioBaseCobro(val) {
     cambiarPrecioBaseDesdeCobro();
 }
 
+function aplicarPlantillaAdicional(concepto, monto, lab, reparto) {
+    const chk = document.getElementById('checkAdicionales');
+    if (chk && !chk.checked) {
+        chk.checked = true;
+        toggleAdicionalesCobro(false);
+    }
+    const inpConc = document.getElementById('cobrar_adicional_concepto');
+    const inpMonto = document.getElementById('cobrar_adicional_monto');
+    const inpLab = document.getElementById('cobrar_costo_laboratorio');
+    const selRep = document.getElementById('cobrar_adicional_reparto');
+
+    if (inpConc) inpConc.value = concepto;
+    if (inpMonto) inpMonto.value = parseFloat(monto).toFixed(2);
+    if (inpLab) inpLab.value = parseFloat(lab).toFixed(2);
+    if (selRep) selRep.value = reparto;
+
+    recalcularConversionCobro();
+}
+
+function detectarConceptoAdicional(val) {
+    if (!val) return;
+    const clean = val.toLowerCase().trim();
+    const selRep = document.getElementById('cobrar_adicional_reparto');
+    const inpMonto = document.getElementById('cobrar_adicional_monto');
+    const inpLab = document.getElementById('cobrar_costo_laboratorio');
+
+    if (clean.includes('citolog') || clean.includes('citol')) {
+        if (selRep && selRep.value !== 'centro') {
+            selRep.value = 'centro';
+        }
+        if (inpMonto && (parseFloat(inpMonto.value) === 0 || !inpMonto.value)) {
+            inpMonto.value = '10.00';
+        }
+        if (inpLab && (parseFloat(inpLab.value) === 0 || !inpLab.value)) {
+            inpLab.value = '8.00';
+        }
+        recalcularConversionCobro();
+    }
+}
+
 function recalcularConversionCobro() {
     const tasa = parseFloat(document.getElementById('cobrar_tasa_bcv').value) || AppState.tasaBcv;
     const chkAdic = document.getElementById('checkAdicionales');
@@ -1702,12 +1765,14 @@ function recalcularConversionCobro() {
 
     const adicMonto = tieneAdic ? (parseFloat(document.getElementById('cobrar_adicional_monto').value) || 0.0) : 0.0;
     const labCosto = tieneAdic ? (parseFloat(document.getElementById('cobrar_costo_laboratorio').value) || 0.0) : 0.0;
+    const selReparto = document.getElementById('cobrar_adicional_reparto');
+    const esSoloCentro = selReparto && selReparto.value === 'centro';
 
     // Cálculo de reparto del adicional
-    const pctMed = AppState.cobrarPctMedico !== undefined ? AppState.cobrarPctMedico : 50.0;
+    const pctMed = esSoloCentro ? 0.0 : (AppState.cobrarPctMedico !== undefined ? AppState.cobrarPctMedico : 50.0);
     const netoRepartir = Math.max(0.0, adicMonto - labCosto);
-    const medShare = netoRepartir * (pctMed / 100.0);
-    const adhShare = netoRepartir * ((100.0 - pctMed) / 100.0);
+    const medShare = esSoloCentro ? 0.0 : (netoRepartir * (pctMed / 100.0));
+    const adhShare = esSoloCentro ? netoRepartir : (netoRepartir * ((100.0 - pctMed) / 100.0));
 
     // Actualizar panel de desglose
     const elLab = document.getElementById('dsp_adic_lab');
@@ -1719,7 +1784,7 @@ function recalcularConversionCobro() {
     const elAdh = document.getElementById('dsp_adic_adh');
     if (elAdh) elAdh.innerText = `$${adhShare.toFixed(2)}`;
     const elPct = document.getElementById('dsp_adic_pct_med');
-    if (elPct) elPct.innerText = `${pctMed.toFixed(0)}%`;
+    if (elPct) elPct.innerText = esSoloCentro ? '0% (Excluido)' : `${pctMed.toFixed(0)}%`;
 
     // Total a cobrar al paciente en caja ($ USD)
     const base = AppState.cobrarBasePrecio !== undefined ? AppState.cobrarBasePrecio : 0.0;
@@ -1813,10 +1878,13 @@ async function guardarCobro(e) {
         data.adicional_concepto = null;
         data.adicional_monto = 0.0;
         data.costo_laboratorio = 0.0;
+        data.adicional_reparto = 'compartido';
         delete data.precio_usd;
     } else {
         data.adicional_monto = parseFloat(data.adicional_monto) || 0.0;
         data.costo_laboratorio = parseFloat(data.costo_laboratorio) || 0.0;
+        const selRep = document.getElementById('cobrar_adicional_reparto');
+        data.adicional_reparto = selRep ? selRep.value : 'compartido';
         const inpBase = document.getElementById('cobrar_precio_base_input');
         if (inpBase) {
             data.precio_usd = parseFloat(inpBase.value) || 0.0;
@@ -2021,6 +2089,11 @@ async function cargarLiquidacion() {
                         const lab = parseFloat(d.costo_laboratorio || 0);
                         const neto = Math.max(0, adic - lab);
                         totDeduc += lab;
+                        const esCentro = d.adicional_reparto === 'centro' || (d.adicional_concepto && d.adicional_concepto.toLowerCase().includes('citolog'));
+                        const badgeReparto = esCentro 
+                            ? `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle ms-1" style="font-size: 0.68rem;" title="100% para el Centro ADH ($0 Médico)">100% ADH</span>`
+                            : `<span class="badge bg-light text-secondary border ms-1" style="font-size: 0.68rem;" title="Reparto proporcional con el médico">50/50</span>`;
+
                         dHtml += `
                             <tr>
                                 <td>${d.fecha}</td>
@@ -2030,7 +2103,7 @@ async function cargarLiquidacion() {
                                 <td class="fw-semibold text-warning-emphasis">${d.adicional_concepto || 'Insumo Externo'}</td>
                                 <td class="fw-bold">$${adic.toFixed(2)}</td>
                                 <td class="fw-bold text-danger">-$${lab.toFixed(2)}</td>
-                                <td class="fw-bold text-success">$${neto.toFixed(2)}</td>
+                                <td class="fw-bold text-success">$${neto.toFixed(2)} ${badgeReparto}</td>
                             </tr>
                         `;
                     });

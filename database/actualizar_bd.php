@@ -71,6 +71,12 @@ try {
         registrarLog("Columna 'costo_laboratorio' agregada a 'citas'.", 'success');
     }
 
+    $colAdicReparto = $db->query("SHOW COLUMNS FROM citas LIKE 'adicional_reparto'")->fetch();
+    if (!$colAdicReparto) {
+        $db->exec("ALTER TABLE citas ADD COLUMN adicional_reparto VARCHAR(30) DEFAULT 'compartido' AFTER costo_laboratorio");
+        registrarLog("Columna 'adicional_reparto' agregada a 'citas'.", 'success');
+    }
+
     // Paleta de colores para médicos existentes (tanto históricos como actuales)
     $coloresMedicos = [
         'Carlos Eduardo'    => '#3c3c3c',

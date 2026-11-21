@@ -16,6 +16,10 @@ if ($method === 'POST') {
     $adicional_concepto = array_key_exists('adicional_concepto', $input) ? (trim($input['adicional_concepto'] ?? '') ?: null) : null;
     $adicional_monto = max(0.0, (float)($input['adicional_monto'] ?? 0.0));
     $costo_laboratorio = max(0.0, (float)($input['costo_laboratorio'] ?? 0.0));
+    $adicional_reparto = trim($input['adicional_reparto'] ?? 'compartido') ?: 'compartido';
+    if ($adicional_reparto === 'compartido' && $adicional_concepto !== null && stripos($adicional_concepto, 'citolog') !== false) {
+        $adicional_reparto = 'centro';
+    }
 
     if ($cita_id <= 0) {
         sendJsonResponse(false, null, 'ID de cita no válido', 400);
@@ -66,13 +70,14 @@ if ($method === 'POST') {
 
         // Actualizar la cita con el nuevo estado, tasa, comprobante y adicionales
         $paramsUp = [
-            ':estado'     => $estado_final,
-            ':tasa'       => $tasa_bcv,
-            ':fac'        => $factura_o_empleado,
-            ':adic_conc'  => $adicional_concepto,
-            ':adic_monto' => $adicional_monto,
-            ':costo_lab'  => $costo_laboratorio,
-            ':id'         => $cita_id
+            ':estado'       => $estado_final,
+            ':tasa'         => $tasa_bcv,
+            ':fac'          => $factura_o_empleado,
+            ':adic_conc'    => $adicional_concepto,
+            ':adic_monto'   => $adicional_monto,
+            ':costo_lab'    => $costo_laboratorio,
+            ':adic_reparto' => $adicional_reparto,
+            ':id'           => $cita_id
         ];
         $precioSql = "";
         if ($precio_usd !== null) {
@@ -87,7 +92,8 @@ if ($method === 'POST') {
                 factura_o_empleado = :fac,
                 adicional_concepto = :adic_conc,
                 adicional_monto = :adic_monto,
-                costo_laboratorio = :costo_lab
+                costo_laboratorio = :costo_lab,
+                adicional_reparto = :adic_reparto
                 {$precioSql}
             WHERE id = :id
         ");

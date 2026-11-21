@@ -279,25 +279,31 @@ if ($method === 'POST') {
         $adicional_concepto = array_key_exists('adicional_concepto', $input) ? (trim($input['adicional_concepto'] ?? '') ?: null) : ($citaActual['adicional_concepto'] ?? null);
         $adicional_monto = array_key_exists('adicional_monto', $input) ? max(0.0, (float)$input['adicional_monto']) : (float)($citaActual['adicional_monto'] ?? 0.0);
         $costo_laboratorio = array_key_exists('costo_laboratorio', $input) ? max(0.0, (float)$input['costo_laboratorio']) : (float)($citaActual['costo_laboratorio'] ?? 0.0);
+        $adicional_reparto = array_key_exists('adicional_reparto', $input) ? (trim($input['adicional_reparto'] ?? 'compartido') ?: 'compartido') : ($citaActual['adicional_reparto'] ?? 'compartido');
+        if ($adicional_reparto === 'compartido' && $adicional_concepto !== null && stripos($adicional_concepto, 'citolog') !== false) {
+            $adicional_reparto = 'centro';
+        }
 
         $stmt = $pdo->prepare("
             UPDATE citas
             SET medico_id = :med_id, tipo = :tipo, precio_usd = :precio, estado = :estado,
                 observaciones = :obs, motivo_consulta = :motivo,
-                adicional_concepto = :adic_conc, adicional_monto = :adic_monto, costo_laboratorio = :costo_lab
+                adicional_concepto = :adic_conc, adicional_monto = :adic_monto, costo_laboratorio = :costo_lab,
+                adicional_reparto = :adic_reparto
             WHERE id = :id
         ");
         $stmt->execute([
-            ':med_id'     => $medico_id,
-            ':tipo'       => $tipo,
-            ':precio'     => $precio_usd,
-            ':estado'     => $estado,
-            ':obs'        => $observaciones,
-            ':motivo'     => $motivo,
-            ':adic_conc'  => $adicional_concepto,
-            ':adic_monto' => $adicional_monto,
-            ':costo_lab'  => $costo_laboratorio,
-            ':id'         => $cita_id
+            ':med_id'       => $medico_id,
+            ':tipo'         => $tipo,
+            ':precio'       => $precio_usd,
+            ':estado'       => $estado,
+            ':obs'          => $observaciones,
+            ':motivo'       => $motivo,
+            ':adic_conc'    => $adicional_concepto,
+            ':adic_monto'   => $adicional_monto,
+            ':costo_lab'    => $costo_laboratorio,
+            ':adic_reparto' => $adicional_reparto,
+            ':id'           => $cita_id
         ]);
 
         // Retornar la cita actualizada con información de médico, paciente y consultorio

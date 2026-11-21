@@ -64,13 +64,20 @@ El análisis de las fórmulas de las columnas `AE` a `AL` del Excel original rev
    * El Médico decide no cobrar sus honorarios (**$0** para el Médico).
    * El paciente abona el 50% que ingresa al Centro Médico (**50% ADH**).
 
-### Procedimientos e Insumos Adicionales (Rayos X, Férulas, Laboratorio):
-* **Campos en base de datos (`citas`):** `adicional_concepto` (VARCHAR), `adicional_monto` (DECIMAL), `costo_laboratorio` (DECIMAL).
+### Procedimientos e Insumos Adicionales (Rayos X, Férulas, Laboratorio, Citología):
+* **Campos en base de datos (`citas`):** `adicional_concepto` (VARCHAR), `adicional_monto` (DECIMAL), `costo_laboratorio` (DECIMAL), `adicional_reparto` (VARCHAR: `'compartido'` o `'centro'`).
 * **Monto Cobrado:** $\text{Base Cobrada} + \text{adicional\_monto}$.
-* **Deducción de Laboratorio:** `costo_laboratorio` se reserva para pago a terceros.
-* **Reparto Neto:** $\text{Neto} = \max(0, \text{adicional\_monto} - \text{costo\_laboratorio})$.
-  - $\text{Médico} = \text{Neto} \times (\% \text{Honorario} / 100)$.
-  - $\text{ADH} = \text{Neto} \times ((100 - \% \text{Honorario}) / 100)$.
+* **Deducción de Laboratorio:** `costo_laboratorio` se reserva para pago directo a proveedores externos (sin comisión institucional ni médica).
+* **Neto Excedente a Repartir:** $\text{Neto} = \max(0, \text{adicional\_monto} - \text{costo\_laboratorio})$.
+* **Reglas de Reparto según Especialidad / Procedimiento:**
+  1. **Procedimientos Habituales (Odontología, Traumatología, Otorrinolaringología, Férulas, Rayos X, etc. - `adicional_reparto = 'compartido'`):**
+     - $\text{Médico} = \text{Neto} \times (\% \text{Honorario} / 100)$ (por defecto 50%).
+     - $\text{ADH} = \text{Neto} \times ((100 - \% \text{Honorario}) / 100)$ (por defecto 50%).
+  2. **Caso Especial Citología en Ginecología (`adicional_reparto = 'centro'`):**
+     - Ejemplo: Cobro $10.00, Laboratorio $8.00 $\rightarrow$ Neto $2.00.
+     - **$\text{ADH} = 100\%$ del Neto** ($2.00 para el centro).
+     - **$\text{Médico} = \$0.00$** (el especialista no recibe porcentaje del estudio de citología).
+     - La consulta médica base de ginecología (ej: $50.00) se reparte de forma normal (50% Médico = $25.00, 50% ADH = $25.00). Total cita: $60.00 (Lab $8, ADH $27, Médico $25).
 
 ### Fórmulas Algebraicas de las Columnas del Reporte
 * **Total Bruto (AI):** $\sum \text{Precio}$ para citas en estado `💲` o `📦`.

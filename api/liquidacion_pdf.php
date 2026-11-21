@@ -84,7 +84,12 @@ $sql = "
                       THEN c.precio_usd * ((100.0 - COALESCE(m.porcentaje_honorario, 50.0)) / 100.0)
                       ELSE 0 
                  END)
-                + (GREATEST(0, COALESCE(c.adicional_monto, 0) - COALESCE(c.costo_laboratorio, 0)) * ((100.0 - COALESCE(m.porcentaje_honorario, 50.0)) / 100.0))
+                + (CASE 
+                    WHEN COALESCE(c.adicional_reparto, 'compartido') = 'centro' 
+                        THEN GREATEST(0, COALESCE(c.adicional_monto, 0) - COALESCE(c.costo_laboratorio, 0))
+                    ELSE 
+                        (GREATEST(0, COALESCE(c.adicional_monto, 0) - COALESCE(c.costo_laboratorio, 0)) * ((100.0 - COALESCE(m.porcentaje_honorario, 50.0)) / 100.0))
+                   END)
             ELSE 0 
         END), 0) AS monto_adh,
         
@@ -95,7 +100,12 @@ $sql = "
                       THEN c.precio_usd * (COALESCE(m.porcentaje_honorario, 50.0) / 100.0)
                       ELSE 0 
                  END)
-                + (GREATEST(0, COALESCE(c.adicional_monto, 0) - COALESCE(c.costo_laboratorio, 0)) * (COALESCE(m.porcentaje_honorario, 50.0) / 100.0))
+                + (CASE 
+                    WHEN COALESCE(c.adicional_reparto, 'compartido') = 'centro' 
+                        THEN 0
+                    ELSE 
+                        (GREATEST(0, COALESCE(c.adicional_monto, 0) - COALESCE(c.costo_laboratorio, 0)) * (COALESCE(m.porcentaje_honorario, 50.0) / 100.0))
+                   END)
             ELSE 0 
         END), 0) AS monto_medico,
 
@@ -550,7 +560,9 @@ if (!empty($deduccionesLab)) {
 
         $pdf->SetFont('Arial', 'B', 7.8);
         $pdf->SetTextColor(180, 83, 9);
-        $pdf->Cell(38.0, 6.2, pdfTxt(' ' . ($d['adicional_concepto'] ?: 'Insumo Externo')), 1, 0, 'L', true);
+        $esCentro = (($d['adicional_reparto'] ?? '') === 'centro') || (stripos($d['adicional_concepto'] ?? '', 'citolog') !== false);
+        $conceptoTxt = ($d['adicional_concepto'] ?: 'Insumo Externo') . ($esCentro ? ' [100% ADH]' : '');
+        $pdf->Cell(38.0, 6.2, pdfTxt(' ' . $conceptoTxt), 1, 0, 'L', true);
 
         $montoCobradoAdic = (float)$d['adicional_monto'];
         $costoLab = (float)$d['costo_laboratorio'];

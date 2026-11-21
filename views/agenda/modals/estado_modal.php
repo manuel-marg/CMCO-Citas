@@ -122,6 +122,9 @@
                         <div id="det_laboratorio_line" class="text-muted d-none" style="font-size: 0.72rem;">
                             Deducción laboratorio: <span id="det_laboratorio_monto">$0.00</span>
                         </div>
+                        <div id="det_reparto_line" class="text-secondary d-none" style="font-size: 0.72rem;">
+                            Reparto neto: <span id="det_reparto_texto" class="badge bg-light text-dark border"></span>
+                        </div>
                     </div>
 
                     <div id="det_pagos_box" class="pt-1 mt-1 border-top small d-none" style="font-size: 0.78rem;">

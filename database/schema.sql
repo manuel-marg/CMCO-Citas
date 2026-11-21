@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS `citas` (
     `adicional_concepto` VARCHAR(150) NULL,
     `adicional_monto` DECIMAL(10,2) DEFAULT 0.00,
     `costo_laboratorio` DECIMAL(10,2) DEFAULT 0.00,
+    `adicional_reparto` VARCHAR(30) DEFAULT 'compartido',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`consultorio_id`) REFERENCES `consultorios`(`id`) ON UPDATE CASCADE,

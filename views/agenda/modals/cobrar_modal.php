@@ -66,10 +66,24 @@
                                 </div>
                             </div>
 
+                            <!-- Plantillas Rápidas de Procedimientos Habituales -->
+                            <div class="mb-2 d-flex gap-1 flex-wrap align-items-center">
+                                <span class="text-muted" style="font-size: 0.72rem;"><i class="bi bi-lightning-charge me-1"></i>Cargar plantilla:</span>
+                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Citología', 10, 8, 'centro')" title="Citología en Ginecología: $10 cobro, $8 lab, $2 para el Centro ADH">
+                                    Citología ($10 / Lab $8 / 100% ADH)
+                                </button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Férula de descarga', 150, 50, 'compartido')" title="Férula: $150 cobro, $50 lab, $100 se divide 50/50">
+                                    Férula ($150 / Lab $50)
+                                </button>
+                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Rayos X', 10, 0, 'compartido')" title="Rayos X: $10 cobro, $0 lab, $10 se divide 50/50">
+                                    Rayos X ($10)
+                                </button>
+                            </div>
+
                             <div class="row g-2 mb-2">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-muted mb-1">Concepto del Adicional:</label>
-                                    <input type="text" class="form-control form-control-sm" id="cobrar_adicional_concepto" name="adicional_concepto" placeholder="Ej: Rayos X, Férula de descarga, etc.">
+                                    <input type="text" class="form-control form-control-sm" id="cobrar_adicional_concepto" name="adicional_concepto" placeholder="Ej: Citología, Rayos X, Férula, etc." oninput="detectarConceptoAdicional(this.value)">
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small fw-bold text-muted mb-1">Monto a Cobrar ($):</label>
@@ -78,6 +92,24 @@
                                 <div class="col-md-3">
                                     <label class="form-label small fw-bold text-muted mb-1">Laboratorio / Insumo ($):</label>
                                     <input type="number" step="0.01" min="0" class="form-control form-control-sm text-secondary" id="cobrar_costo_laboratorio" name="costo_laboratorio" value="0.00" oninput="recalcularConversionCobro()" title="Deducción de insumos de terceros antes de repartir">
+                                </div>
+                            </div>
+
+                            <!-- Selector de Esquema de Reparto -->
+                            <div class="row g-2 mb-2 align-items-center bg-white p-2 rounded-2 border">
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold text-dark mb-0 d-block">
+                                        <i class="bi bi-diagram-3 text-primary me-1"></i> Reparto del Neto:
+                                    </label>
+                                    <span class="text-muted" style="font-size: 0.70rem;">
+                                        Define cómo se distribuye el excedente luego de pagar al laboratorio.
+                                    </span>
+                                </div>
+                                <div class="col-md-7">
+                                    <select class="form-select form-select-sm fw-bold" id="cobrar_adicional_reparto" name="adicional_reparto" onchange="recalcularConversionCobro()">
+                                        <option value="compartido">Dividir con Médico (50% Médico / 50% Centro)</option>
+                                        <option value="centro">100% Centro ADH ($0 Médico) — Ej: Citología</option>
+                                    </select>
                                 </div>
                             </div>
 
