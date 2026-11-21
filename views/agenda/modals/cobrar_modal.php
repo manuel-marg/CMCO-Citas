@@ -66,17 +66,11 @@
                                 </div>
                             </div>
 
-                            <!-- Plantillas Rápidas de Procedimientos Habituales -->
+                            <!-- Plantilla Rápida de Citología -->
                             <div class="mb-2 d-flex gap-1 flex-wrap align-items-center">
                                 <span class="text-muted" style="font-size: 0.72rem;"><i class="bi bi-lightning-charge me-1"></i>Cargar plantilla:</span>
                                 <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Citología', 10, 8, 'centro')" title="Citología en Ginecología: $10 cobro, $8 lab, $2 para el Centro Médico">
-                                    Citología ($10 / Lab $8 / 100% Centro)
-                                </button>
-                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Férula de descarga', 150, 50, 'compartido')" title="Férula: $150 cobro, $50 lab, $100 se divide 50/50">
-                                    Férula ($150 / Lab $50)
-                                </button>
-                                <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Rayos X', 10, 0, 'compartido')" title="Rayos X: $10 cobro, $0 lab, $10 se divide 50/50">
-                                    Rayos X ($10)
+                                    <i class="bi bi-tag me-1"></i>Citología ($10 / Lab $8 / 100% Centro)
                                 </button>
                             </div>
 
