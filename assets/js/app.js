@@ -1237,11 +1237,11 @@ async function abrirDetalleCita(citaId) {
             if (repLine && repTxt) {
                 if (cita.adicional_reparto === 'centro' || (cita.adicional_concepto && cita.adicional_concepto.toLowerCase().includes('citolog'))) {
                     repTxt.className = 'badge bg-info-subtle text-info-emphasis border border-info-subtle';
-                    repTxt.innerText = '100% Centro ADH ($0 Médico)';
+                    repTxt.innerText = '100% Centro Médico ($0 Médico)';
                     repLine.classList.remove('d-none');
                 } else if (adicMonto > 0) {
                     repTxt.className = 'badge bg-light text-secondary border';
-                    repTxt.innerText = '50% Médico / 50% ADH';
+                    repTxt.innerText = '50% Médico / 50% Centro Médico';
                     repLine.classList.remove('d-none');
                 } else {
                     repLine.classList.add('d-none');
@@ -2091,7 +2091,7 @@ async function cargarLiquidacion() {
                         totDeduc += lab;
                         const esCentro = d.adicional_reparto === 'centro' || (d.adicional_concepto && d.adicional_concepto.toLowerCase().includes('citolog'));
                         const badgeReparto = esCentro 
-                            ? `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle ms-1" style="font-size: 0.68rem;" title="100% para el Centro ADH ($0 Médico)">100% ADH</span>`
+                            ? `<span class="badge bg-info-subtle text-info-emphasis border border-info-subtle ms-1" style="font-size: 0.68rem;" title="100% para el Centro Médico ($0 Médico)">100% Centro</span>`
                             : `<span class="badge bg-light text-secondary border ms-1" style="font-size: 0.68rem;" title="Reparto proporcional con el médico">50/50</span>`;
 
                         dHtml += `

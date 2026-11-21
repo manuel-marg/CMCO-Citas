@@ -69,8 +69,8 @@
                             <!-- Plantillas Rápidas de Procedimientos Habituales -->
                             <div class="mb-2 d-flex gap-1 flex-wrap align-items-center">
                                 <span class="text-muted" style="font-size: 0.72rem;"><i class="bi bi-lightning-charge me-1"></i>Cargar plantilla:</span>
-                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Citología', 10, 8, 'centro')" title="Citología en Ginecología: $10 cobro, $8 lab, $2 para el Centro ADH">
-                                    Citología ($10 / Lab $8 / 100% ADH)
+                                <button type="button" class="btn btn-xs btn-outline-primary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Citología', 10, 8, 'centro')" title="Citología en Ginecología: $10 cobro, $8 lab, $2 para el Centro Médico">
+                                    Citología ($10 / Lab $8 / 100% Centro)
                                 </button>
                                 <button type="button" class="btn btn-xs btn-outline-secondary py-0 px-2 fw-semibold" style="font-size: 0.70rem;" onclick="aplicarPlantillaAdicional('Férula de descarga', 150, 50, 'compartido')" title="Férula: $150 cobro, $50 lab, $100 se divide 50/50">
                                     Férula ($150 / Lab $50)
@@ -107,8 +107,8 @@
                                 </div>
                                 <div class="col-md-7">
                                     <select class="form-select form-select-sm fw-bold" id="cobrar_adicional_reparto" name="adicional_reparto" onchange="recalcularConversionCobro()">
-                                        <option value="compartido">Dividir con Médico (50% Médico / 50% Centro)</option>
-                                        <option value="centro">100% Centro ADH ($0 Médico) — Ej: Citología</option>
+                                        <option value="compartido">Dividir con Médico (50% Médico / 50% Centro Médico)</option>
+                                        <option value="centro">100% Centro Médico ($0 Médico) — Ej: Citología</option>
                                     </select>
                                 </div>
                             </div>
@@ -126,7 +126,7 @@
                                         <span class="text-muted">↳ Especialista (<span id="dsp_adic_pct_med">50%</span>):</span> <strong id="dsp_adic_med" class="text-success">$0.00</strong>
                                     </div>
                                     <div>
-                                        <span class="text-muted">↳ Centro ADH:</span> <strong id="dsp_adic_adh" class="text-info">$0.00</strong>
+                                        <span class="text-muted">↳ Centro Médico:</span> <strong id="dsp_adic_adh" class="text-info">$0.00</strong>
                                     </div>
                                 </div>
                             </div>

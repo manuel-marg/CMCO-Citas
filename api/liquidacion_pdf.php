@@ -561,7 +561,7 @@ if (!empty($deduccionesLab)) {
         $pdf->SetFont('Arial', 'B', 7.8);
         $pdf->SetTextColor(180, 83, 9);
         $esCentro = (($d['adicional_reparto'] ?? '') === 'centro') || (stripos($d['adicional_concepto'] ?? '', 'citolog') !== false);
-        $conceptoTxt = ($d['adicional_concepto'] ?: 'Insumo Externo') . ($esCentro ? ' [100% ADH]' : '');
+        $conceptoTxt = ($d['adicional_concepto'] ?: 'Insumo Externo') . ($esCentro ? ' [100% Centro]' : '');
         $pdf->Cell(38.0, 6.2, pdfTxt(' ' . $conceptoTxt), 1, 0, 'L', true);
 
         $montoCobradoAdic = (float)$d['adicional_monto'];
